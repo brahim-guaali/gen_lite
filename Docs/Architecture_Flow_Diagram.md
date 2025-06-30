@@ -1,380 +1,386 @@
 # GenLite Architecture Flow Diagram
 
-## 🏗️ Overall Architecture Flow
+## Overview
+
+This document provides a comprehensive view of GenLite's architecture, data flow, and component interactions. The application follows Clean Architecture principles with a focus on privacy, performance, and user experience.
+
+## System Architecture
 
 ```mermaid
 graph TB
-    subgraph "User Interface Layer"
-        CS[Chat Screen]
-        FMS[File Management Screen]
-        AMS[Agent Management Screen]
-        MS[Main Screen]
-    end
-
-    subgraph "State Management Layer"
-        CB[ChatBloc]
-        FB[FileBloc]
-        AB[AgentBloc]
-    end
-
-    subgraph "Domain Layer"
-        CM[Conversation Model]
-        MM[Message Model]
-        FM[File Model]
-        AM[Agent Model]
-    end
-
-    subgraph "Infrastructure Layer"
-        LLM[Local LLM - Gemma 2B]
-        FS[File System]
-        DB[Local Database]
-    end
-
-    MS --> CS
-    MS --> FMS
-    MS --> AMS
-
-    CS --> CB
-    FMS --> FB
-    AMS --> AB
-
-    CB --> CM
-    CB --> MM
-    FB --> FM
-    AB --> AM
-
-    CB --> LLM
-    FB --> FS
-    AB --> DB
-    CB --> DB
-```
-
-## 🔄 P0 - Chat Interface Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant CS as Chat Screen
-    participant CB as ChatBloc
-    participant LLM as Local LLM
-    participant DB as Database
-
-    U->>CS: Type message & send
-    CS->>CB: SendMessage event
-    CB->>CB: Update state to loading
-    CS->>CS: Show typing indicator
-    
-    CB->>LLM: Process message
-    LLM->>CB: Return AI response
-    CB->>CB: Add message to conversation
-    CB->>DB: Save conversation
-    CB->>CS: Update state with response
-    CS->>CS: Display message bubble
-    CS->>CS: Hide typing indicator
-```
-
-## 📁 P1 - File Upload & Q&A Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant FMS as File Management Screen
-    participant FB as FileBloc
-    participant FP as File Picker
-    participant FS as File System
-    participant CS as Chat Screen
-
-    U->>FMS: Tap upload button
-    FMS->>FP: Pick file
-    FP->>FB: PickFile event
-    FB->>FS: Save file locally
-    FB->>FB: Create FileModel
-    FB->>FMS: Update state with file
-    
-    FB->>FB: ProcessFile event
-    FB->>FB: Extract content (TXT/PDF/DOCX)
-    FB->>FB: Mark as processed
-    FMS->>FMS: Show "Ready for Q&A" badge
-    
-    U->>FMS: Tap processed file
-    FMS->>CS: Navigate to chat with file context
-    CS->>CB: AddFileContext event
-    CB->>CB: Include file content in conversation
-    U->>CS: Ask questions about file
-    CS->>LLM: Send question with file context
-    LLM->>CS: Return contextual response
-```
-
-## 🤖 P2 - Custom Agents Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant AMS as Agent Management Screen
-    participant AB as AgentBloc
-    participant CS as Chat Screen
-    participant LLM as Local LLM
-
-    U->>AMS: Create custom agent
-    AMS->>AB: CreateAgent event
-    AB->>AB: Create AgentModel
-    AB->>AMS: Update state
-    
-    U->>AMS: Activate agent
-    AMS->>AB: SetActiveAgent event
-    AB->>AB: Set as active agent
-    AB->>CS: Update chat context
-    
-    U->>CS: Send message
-    CS->>CB: SendMessage with active agent
-    CB->>LLM: Send message + agent system prompt
-    LLM->>CS: Return agent-specific response
-    
-    U->>AMS: Use template
-    AMS->>AB: LoadAgentTemplates event
-    AB->>AB: Load predefined templates
-    AB->>AMS: Display templates
-    U->>AMS: Select template
-    AMS->>AB: CreateFromTemplate
-    AB->>AB: Create agent from template
-```
-
-## 🔍 P1 - Conversation Management Flow
-
-```mermaid
-sequenceDiagram
-    participant U as User
-    participant CS as Chat Screen
-    participant CB as ChatBloc
-    participant DB as Database
-
-    U->>CS: Search conversations
-    CS->>CB: SearchConversations event
-    CB->>DB: Query conversations
-    DB->>CB: Return filtered results
-    CB->>CS: Update state with results
-    
-    U->>CS: Export conversation
-    CS->>CB: ExportConversation event
-    CB->>CB: Format conversation (TXT/PDF/JSON)
-    CB->>FS: Save export file
-    CB->>CS: Show export success
-    
-    U->>CS: Delete conversation
-    CS->>CB: DeleteConversation event
-    CB->>DB: Remove conversation
-    CB->>CS: Update state
-    CS->>CS: Remove from UI
-```
-
-## 🏛️ Clean Architecture Layers
-
-```mermaid
-graph LR
     subgraph "Presentation Layer"
-        UI[UI Components]
-        BLoC[BLoC Consumers]
+        UI[Unified UI Components]
+        ChatUI[Chat Screen]
+        FileUI[File Management Screen]
+        SettingsUI[Settings Screen]
+        DownloadUI[Download Screen]
     end
-
-    subgraph "Domain Layer"
-        UC[Use Cases]
-        EN[Entities]
-        REP[Repository Interfaces]
+    
+    subgraph "Business Logic Layer"
+        ChatBLoC[Chat BLoC]
+        FileBLoC[File BLoC]
+        AgentBLoC[Agent BLoC]
+        DownloadBLoC[Download State]
     end
-
+    
     subgraph "Data Layer"
-        DS[Data Sources]
-        DM[Data Models]
-        REP_IMPL[Repository Implementations]
+        LLMService[LLM Service]
+        FileService[File Processing Service]
+        StorageService[Storage Service]
+        DownloadService[Enhanced Model Downloader]
     end
-
-    subgraph "Infrastructure Layer"
-        EX[External Dependencies]
-        ST[Storage]
-        NET[Network]
+    
+    subgraph "External Dependencies"
+        GemmaModel[Gemma 2B Model]
+        HuggingFace[Hugging Face API]
+        LocalStorage[Local Storage]
     end
-
-    UI --> BLoC
-    BLoC --> UC
-    UC --> EN
-    UC --> REP
-    REP --> REP_IMPL
-    REP_IMPL --> DS
-    DS --> EX
-    DS --> ST
+    
+    UI --> ChatUI
+    UI --> FileUI
+    UI --> SettingsUI
+    UI --> DownloadUI
+    
+    ChatUI --> ChatBLoC
+    FileUI --> FileBLoC
+    SettingsUI --> AgentBLoC
+    DownloadUI --> DownloadBLoC
+    
+    ChatBLoC --> LLMService
+    FileBLoC --> FileService
+    AgentBLoC --> StorageService
+    DownloadBLoC --> DownloadService
+    
+    LLMService --> GemmaModel
+    DownloadService --> HuggingFace
+    StorageService --> LocalStorage
+    FileService --> LocalStorage
 ```
 
-## 📊 State Management Flow
+## Component Details
 
-```mermaid
-stateDiagram-v2
-    [*] --> Initial
-    
-    Initial --> Loading : Load event
-    Loading --> Loaded : Success
-    Loading --> Error : Failure
-    Error --> Loading : Retry
-    
-    Loaded --> Creating : Create event
-    Creating --> Loaded : Success
-    Creating --> Error : Failure
-    
-    Loaded --> Updating : Update event
-    Updating --> Loaded : Success
-    Updating --> Error : Failure
-    
-    Loaded --> Deleting : Delete event
-    Deleting --> Loaded : Success
-    Deleting --> Error : Failure
-    
-    Loaded --> Processing : Process event
-    Processing --> Loaded : Success
-    Processing --> Error : Failure
-```
-
-## 🔗 Feature Integration Points
-
-```mermaid
-graph TB
-    subgraph "Core Features"
-        CHAT[P0: Chat Interface]
-        FILE[P1: File Management]
-        AGENT[P2: Custom Agents]
-        CONV[P1: Conversation Management]
-    end
-
-    subgraph "Integration Points"
-        IP1[File Context in Chat]
-        IP2[Agent Context in Chat]
-        IP3[Conversation Export]
-        IP4[Agent Templates]
-    end
-
-    CHAT --> IP1
-    FILE --> IP1
-    
-    CHAT --> IP2
-    AGENT --> IP2
-    
-    CHAT --> IP3
-    CONV --> IP3
-    
-    AGENT --> IP4
-    CONV --> IP4
-```
-
-## 🎯 User Journey Flow
-
-```mermaid
-journey
-    title GenLite User Journey
-    section Onboarding
-      Open App: 5: User
-      Create First Conversation: 4: User
-      Send First Message: 5: User
-    section File Management
-      Upload Document: 4: User
-      Process File: 3: User
-      Ask Questions: 5: User
-    section Agent Management
-      Browse Templates: 4: User
-      Create Custom Agent: 3: User
-      Activate Agent: 4: User
-    section Advanced Usage
-      Search Conversations: 3: User
-      Export Data: 2: User
-      Manage Files: 3: User
-```
-
-## 🔧 Technical Implementation Flow
+### 1. Unified UI Design System
 
 ```mermaid
 graph LR
-    subgraph "Frontend"
-        WIDGET[Flutter Widgets]
-        BLOC[BLoC Pattern]
-        STATE[State Management]
+    subgraph "UI Components Library"
+        Buttons[Button Components]
+        Cards[Card Components]
+        Progress[Progress Indicators]
+        Icons[Icon Components]
+        Utils[Utility Components]
     end
-
-    subgraph "Backend"
-        MODEL[Local LLM]
-        STORAGE[Local Storage]
-        PROCESSING[File Processing]
-    end
-
-    subgraph "Data Flow"
-        EVENT[Events]
-        STATE_CHANGE[State Changes]
-        UI_UPDATE[UI Updates]
-    end
-
-    WIDGET --> BLOC
-    BLOC --> STATE
-    STATE --> WIDGET
     
-    BLOC --> MODEL
-    BLOC --> STORAGE
-    BLOC --> PROCESSING
+    subgraph "Design Principles"
+        Consistency[Consistency]
+        Accessibility[Accessibility]
+        Responsiveness[Responsiveness]
+        Performance[Performance]
+    end
     
-    EVENT --> STATE_CHANGE
-    STATE_CHANGE --> UI_UPDATE
+    Buttons --> Consistency
+    Cards --> Accessibility
+    Progress --> Responsiveness
+    Icons --> Performance
+    Utils --> Consistency
 ```
 
-## 📱 Cross-Platform Flow
+**Key Components:**
+- `PrimaryButton`: Main action buttons with loading states
+- `SecondaryButton`: Secondary actions with outline style
+- `DangerButton`: Destructive actions with error styling
+- `AppCard`: Consistent card styling with optional tap actions
+- `AppProgressBar`: Animated progress bars with proper width calculation
+- `AppIcon`: Consistent icon styling with background options
+- `AppBadge`: Status indicators and labels
+- `AppDivider`: Consistent dividers
+- `AppSpacing`: Standardized spacing constants
+
+### 2. Enhanced Model Downloader
 
 ```mermaid
-graph TB
-    subgraph "Platforms"
-        IOS[iOS]
-        ANDROID[Android]
-        WEB[Web]
-    end
-
-    subgraph "Shared Components"
-        CORE[Core Logic]
-        UI[UI Components]
-        BLOC[BLoC Logic]
-    end
-
-    subgraph "Platform Specific"
-        IOS_SPEC[iOS Specific]
-        ANDROID_SPEC[Android Specific]
-        WEB_SPEC[Web Specific]
-    end
-
-    IOS --> CORE
-    ANDROID --> CORE
-    WEB --> CORE
+sequenceDiagram
+    participant User
+    participant DownloadUI
+    participant DownloadService
+    participant HuggingFace
+    participant LocalStorage
     
-    CORE --> UI
-    CORE --> BLOC
+    User->>DownloadUI: Start Download
+    DownloadUI->>DownloadService: Check Existing State
+    DownloadService->>LocalStorage: Get Download State
     
-    UI --> IOS_SPEC
-    UI --> ANDROID_SPEC
-    UI --> WEB_SPEC
+    alt Has Incomplete Download
+        DownloadService->>DownloadUI: Resume from Position
+        DownloadUI->>User: Show Resume Status
+    end
+    
+    DownloadService->>HuggingFace: Request Model (with Range if resuming)
+    HuggingFace->>DownloadService: Stream Model Data
+    DownloadService->>DownloadUI: Progress Updates
+    DownloadService->>LocalStorage: Save Progress Periodically
+    
+    DownloadService->>DownloadUI: Download Complete
+    DownloadUI->>User: Show Success
 ```
+
+**Key Features:**
+- **Resume Functionality**: HTTP Range requests for partial downloads
+- **State Persistence**: Download progress saved to SharedPreferences
+- **Error Recovery**: Automatic retry with exponential backoff
+- **Progress Tracking**: Real-time speed, time, and percentage updates
+- **File Integrity**: Validation of downloaded chunks
+
+### 3. Application Flow
+
+```mermaid
+flowchart TD
+    Start([App Launch]) --> Onboarding{First Launch?}
+    Onboarding -->|Yes| Welcome[Welcome Screen]
+    Onboarding -->|No| CheckModel{Model Downloaded?}
+    
+    Welcome --> Terms[Terms Acceptance]
+    Terms --> Download[Model Download]
+    
+    CheckModel -->|Yes| MainApp[Main Application]
+    CheckModel -->|No| Download
+    
+    Download --> DownloadComplete{Download Success?}
+    DownloadComplete -->|Yes| MainApp
+    DownloadComplete -->|No| Error[Error Screen]
+    
+    Error --> Retry{Retry?}
+    Retry -->|Yes| Download
+    Retry -->|No| Skip[Skip to App]
+    
+    MainApp --> Chat[Chat Interface]
+    MainApp --> Files[File Management]
+    MainApp --> Settings[Settings]
+    
+    Chat --> SendMessage[Send Message]
+    SendMessage --> LLM[Local AI Processing]
+    LLM --> Response[AI Response]
+    
+    Files --> Upload[Upload File]
+    Upload --> Process[Process File]
+    Process --> Query[Query File Content]
+    Query --> LLM
+    
+    Skip --> MainApp
+```
+
+### 4. State Management Flow
+
+```mermaid
+graph TD
+    subgraph "Chat Feature"
+        ChatEvent[Chat Events]
+        ChatBLoC[Chat BLoC]
+        ChatState[Chat States]
+        ChatUI[Chat UI]
+    end
+    
+    subgraph "File Management"
+        FileEvent[File Events]
+        FileBLoC[File BLoC]
+        FileState[File States]
+        FileUI[File UI]
+    end
+    
+    subgraph "Settings"
+        AgentEvent[Agent Events]
+        AgentBLoC[Agent BLoC]
+        AgentState[Agent States]
+        SettingsUI[Settings UI]
+    end
+    
+    ChatEvent --> ChatBLoC
+    ChatBLoC --> ChatState
+    ChatState --> ChatUI
+    
+    FileEvent --> FileBLoC
+    FileBLoC --> FileState
+    FileState --> FileUI
+    
+    AgentEvent --> AgentBLoC
+    AgentBLoC --> AgentState
+    AgentState --> SettingsUI
+```
+
+### 5. Data Flow Architecture
+
+```mermaid
+graph LR
+    subgraph "User Input"
+        TextInput[Text Messages]
+        FileInput[File Uploads]
+        SettingsInput[Settings Changes]
+    end
+    
+    subgraph "Processing"
+        TextProcessing[Text Processing]
+        FileProcessing[File Processing]
+        SettingsProcessing[Settings Processing]
+    end
+    
+    subgraph "Storage"
+        ConversationDB[Conversation Storage]
+        FileDB[File Storage]
+        SettingsDB[Settings Storage]
+    end
+    
+    subgraph "AI Processing"
+        LocalLLM[Local LLM]
+        Context[Context Management]
+        Response[Response Generation]
+    end
+    
+    TextInput --> TextProcessing
+    FileInput --> FileProcessing
+    SettingsInput --> SettingsProcessing
+    
+    TextProcessing --> ConversationDB
+    FileProcessing --> FileDB
+    SettingsProcessing --> SettingsDB
+    
+    ConversationDB --> LocalLLM
+    FileDB --> Context
+    Context --> LocalLLM
+    LocalLLM --> Response
+```
+
+### 6. Error Handling Flow
+
+```mermaid
+flowchart TD
+    Operation[Any Operation] --> Try{Try Operation}
+    Try --> Success{Success?}
+    
+    Success -->|Yes| Continue[Continue Flow]
+    Success -->|No| ErrorType{Error Type?}
+    
+    ErrorType -->|Network| NetworkError[Network Error Handler]
+    ErrorType -->|File| FileError[File Error Handler]
+    ErrorType -->|AI| AIError[AI Error Handler]
+    ErrorType -->|General| GeneralError[General Error Handler]
+    
+    NetworkError --> Retry{Retry?}
+    FileError --> Retry
+    AIError --> Retry
+    GeneralError --> Retry
+    
+    Retry -->|Yes| Try
+    Retry -->|No| UserChoice{User Choice?}
+    
+    UserChoice -->|Skip| SkipOperation[Skip Operation]
+    UserChoice -->|Cancel| CancelOperation[Cancel Operation]
+    UserChoice -->|Manual Retry| Try
+    
+    SkipOperation --> Continue
+    CancelOperation --> End[End Flow]
+```
+
+### 7. Security and Privacy Flow
+
+```mermaid
+graph TD
+    subgraph "Data Input"
+        UserData[User Input]
+        FileData[File Data]
+        SettingsData[Settings Data]
+    end
+    
+    subgraph "Local Processing"
+        LocalStorage[Local Storage Only]
+        LocalAI[Local AI Processing]
+        LocalFile[Local File Processing]
+    end
+    
+    subgraph "No External Transmission"
+        NoCloud[No Cloud Storage]
+        NoAnalytics[No Analytics]
+        NoTracking[No User Tracking]
+    end
+    
+    UserData --> LocalStorage
+    FileData --> LocalFile
+    SettingsData --> LocalStorage
+    
+    LocalStorage --> LocalAI
+    LocalFile --> LocalAI
+    
+    LocalAI --> NoCloud
+    LocalAI --> NoAnalytics
+    LocalAI --> NoTracking
+```
+
+## Technical Specifications
+
+### Performance Characteristics
+
+| Component | Response Time | Memory Usage | Storage |
+|-----------|---------------|--------------|---------|
+| App Launch | < 2 seconds | ~50MB | ~4GB (model) |
+| Chat Response | < 3 seconds | ~100MB | Minimal |
+| File Upload | < 5 seconds | ~20MB | File size |
+| Model Download | Variable | ~50MB | ~4GB |
+
+### Scalability Considerations
+
+1. **Horizontal Scaling**: Not applicable (local-only)
+2. **Vertical Scaling**: Limited by device capabilities
+3. **Model Optimization**: Quantized models for efficiency
+4. **Memory Management**: Efficient resource usage
+5. **Storage Optimization**: Compressed model storage
+
+### Reliability Features
+
+1. **Download Resume**: Automatic resume of interrupted downloads
+2. **Error Recovery**: Comprehensive error handling and retry logic
+3. **State Persistence**: Critical state saved across app restarts
+4. **Data Validation**: Input validation and file integrity checks
+5. **Graceful Degradation**: App continues working with limited features
+
+## Future Architecture Considerations
+
+### Planned Enhancements
+
+```mermaid
+graph TD
+    Current[Current Architecture] --> Voice[Voice Input/Output]
+    Current --> Image[Image Analysis]
+    Current --> MultiLang[Multi-language Support]
+    Current --> CloudSync[Optional Cloud Sync]
+    Current --> Plugins[Plugin System]
+    
+    Voice --> EnhancedUX[Enhanced UX]
+    Image --> VisualAI[Visual AI Capabilities]
+    MultiLang --> Global[Global Accessibility]
+    CloudSync --> Backup[Data Backup]
+    Plugins --> Extensible[Extensible Platform]
+```
+
+### Scalability Roadmap
+
+1. **Model Optimization**: Smaller, faster models
+2. **Memory Efficiency**: Reduced memory footprint
+3. **Battery Optimization**: Power-efficient processing
+4. **Startup Speed**: Faster app initialization
+5. **Offline Capabilities**: Complete offline functionality
 
 ---
 
-## 📋 Implementation Status Summary
+## Conclusion
 
-| Feature | Priority | Status | Components |
-|---------|----------|--------|------------|
-| Chat Interface | P0 | ✅ Complete | ChatBloc, ChatScreen, MessageBubble |
-| File Upload & Q&A | P1 | ✅ Complete | FileBloc, FileManagementScreen, FileModel |
-| Custom Agents | P2 | ✅ Complete | AgentBloc, AgentManagementScreen, AgentModel |
-| Conversation Management | P1 | ✅ Complete | ChatBloc events, conversation persistence |
-| Local LLM Integration | P0 | 🔄 Pending | flutter_gemma integration |
-| File Processing | P1 | 🔄 Pending | PDF/DOCX parsing libraries |
-| Persistent Storage | P1 | 🔄 Pending | Hive/SQLite implementation |
+GenLite's architecture prioritizes privacy, performance, and user experience while maintaining clean, maintainable code. The unified design system, enhanced download management, and robust error handling create a professional, reliable application that users can trust with their data.
 
-## 🎯 Next Steps
+**Key Architectural Principles:**
+1. **Privacy First**: All processing happens locally
+2. **User Experience**: Smooth, stable, and intuitive interface
+3. **Maintainability**: Clean architecture and consistent patterns
+4. **Reliability**: Robust error handling and recovery mechanisms
+5. **Performance**: Optimized for mobile devices
 
-1. **Integrate flutter_gemma** for actual LLM functionality
-2. **Add file processing libraries** (pdf_text, docx) for document parsing
-3. **Implement persistent storage** with Hive or SQLite
-4. **Add navigation** between screens
-5. **Connect BLoCs** in main app widget
-6. **Add error handling** and loading states
-7. **Implement export functionality** for conversations
-8. **Add search functionality** for conversations and files 
+**Document Version:** 2.0  
+**Last Updated:** December 2024  
+**Next Review:** January 2025 

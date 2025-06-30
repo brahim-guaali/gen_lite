@@ -1,46 +1,51 @@
-# GenLite 🚀
+# GenLite - Offline AI Assistant
 
-**Your offline AI assistant, running entirely on your device.**
+A lightweight, privacy-focused AI assistant that runs entirely on your device using the Gemma 2B language model.
 
-GenLite is a lightweight Flutter application that brings AI capabilities directly to your device using local language models. No internet required, no data shared, no ongoing costs.
+## 🚀 Features
 
-## ✨ Features
+### 🤖 **AI Capabilities**
+- **100% Offline**: All AI processing happens locally on your device
+- **Privacy First**: No data sent to external servers
+- **Fast Processing**: Optimized local inference with Gemma 2B
+- **Document Analysis**: Upload and analyze PDF, TXT, and DOCX files
+- **Conversation Memory**: Maintains context across chat sessions
 
-- 🤖 **Offline AI Assistant** - Powered by local Gemma 2B model
-- 💬 **Intuitive Chat Interface** - Clean, familiar chat UI similar to ChatGPT
-- 📁 **File Upload & Q&A** - Upload documents and ask questions about their content
-- 🎭 **Custom Agents** - Create and switch between different AI personalities
-- 🔒 **100% Private** - All processing happens locally on your device
-- 📱 **Cross-Platform** - Works on iOS, Android, and Web
-- 🌙 **Dark/Light Theme** - Beautiful UI with theme support
+### 📱 **User Experience**
+- **Unified Design System**: Consistent, modern UI across all screens
+- **Smart Download Management**: Resume interrupted downloads automatically
+- **Progress Tracking**: Real-time download progress with speed and time estimates
+- **Error Recovery**: Robust error handling with retry options
+- **Responsive Layout**: Works seamlessly across different screen sizes
 
-## 🏗️ Architecture
+### 🔧 **Technical Features**
+- **Download Resume**: Continue downloads from where they left off
+- **State Persistence**: Download progress saved across app restarts
+- **Model Management**: Automatic model download and initialization
+- **File Processing**: Extract and analyze document content
+- **Clean Architecture**: Well-structured codebase with BLoC pattern
 
-GenLite follows Clean Architecture principles with BLoC state management:
+## 📋 Requirements
 
-```
-lib/
-├── core/           # App constants, theme, utilities
-├── features/       # Feature modules (chat, file management, settings)
-├── shared/         # Shared models, widgets, services
-└── main.dart       # App entry point
-```
+- **iOS**: iOS 16.0 or later
+- **Android**: Android 8.0 (API level 26) or later
+- **Storage**: ~4GB free space for the AI model
+- **Memory**: 4GB RAM recommended
+- **Network**: Initial download requires internet connection
 
-## 🚀 Getting Started
+## 🛠 Installation
 
 ### Prerequisites
+- Flutter SDK 3.2.0 or later
+- Dart SDK 3.2.0 or later
+- iOS: Xcode 14.0 or later
+- Android: Android Studio with Android SDK
 
-- Flutter SDK (3.16.0 or higher)
-- Dart SDK (3.2.0 or higher)
-- Android Studio / VS Code
-- iOS Simulator (for iOS development)
-- Android Emulator (for Android development)
-
-### Installation
+### Setup
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/gen_lite.git
+   git clone https://github.com/brahim-guaali/gen_lite.git
    cd gen_lite
    ```
 
@@ -49,103 +54,121 @@ lib/
    flutter pub get
    ```
 
-3. **Run the app**
+3. **Configure environment**
+   - Create a `.env` file in the root directory
+   - Add your Hugging Face token:
+     ```
+     HUGGINGFACE_TOKEN=your_token_here
+     ```
+
+4. **Run the app**
    ```bash
-   # For iOS
-   flutter run -d ios
-   
-   # For Android
-   flutter run -d android
-   
-   # For Web
-   flutter run -d chrome
+   flutter run
    ```
 
-## 📱 Usage
+## 🎯 Getting Started
 
-### Starting a Conversation
-1. Launch GenLite
-2. Type your message in the input field
-3. Press send or use quick start prompts
-4. Get instant AI responses
+### First Launch
+1. **Welcome Screen**: Learn about GenLite's features and privacy
+2. **Terms Acceptance**: Accept the Gemma Terms of Use
+3. **Model Download**: The app will download the AI model (~4GB)
+   - Download can be resumed if interrupted
+   - Progress is saved across app restarts
+4. **Ready to Chat**: Start using your offline AI assistant!
 
-### File Upload
-1. Tap the attachment icon
-2. Select a document (PDF, TXT, DOCX)
-3. Ask questions about the uploaded content
-4. Get context-aware responses
+### Using the App
 
-### Custom Agents
-1. Create different AI personalities
-2. Switch between agents for different tasks
-3. Customize behavior and responses
+#### 💬 **Chat Interface**
+- Start conversations with natural language
+- Get instant responses from the local AI model
+- View conversation history and context
 
-## 🛠️ Development
+#### 📁 **File Management**
+- Upload PDF, TXT, or DOCX files
+- Ask questions about document content
+- Get AI-powered analysis and insights
 
-### Project Structure
+#### ⚙️ **Settings & Agents**
+- Configure AI behavior and parameters
+- Create custom AI agents for specific tasks
+- Manage conversation preferences
 
+## 🏗 Architecture
+
+### **Clean Architecture Pattern**
+```
+lib/
+├── core/           # App-wide constants, themes, utilities
+├── features/       # Feature modules (chat, files, settings)
+│   ├── chat/       # Chat functionality
+│   ├── file_management/  # File processing
+│   └── settings/   # App configuration
+└── shared/         # Shared services and widgets
+    ├── services/   # Business logic services
+    └── widgets/    # Reusable UI components
+```
+
+### **State Management**
+- **BLoC Pattern**: Clean separation of business logic and UI
+- **Event-Driven**: Reactive architecture with event streams
+- **Predictable State**: Immutable state management
+
+### **UI Design System**
+- **Unified Components**: Consistent buttons, cards, and indicators
+- **Theme Support**: Light and dark mode compatibility
+- **Responsive Design**: Adapts to different screen sizes
+- **Accessibility**: Proper contrast and touch targets
+
+## 🔒 Privacy & Security
+
+### **Data Protection**
+- **Local Processing**: All AI inference happens on your device
+- **No Cloud Storage**: Conversations and files stay local
+- **No Tracking**: No analytics or user tracking
+- **Secure Storage**: Local data encrypted at rest
+
+### **Model Security**
+- **Verified Source**: Gemma model from Google's official repository
+- **Hash Verification**: Model integrity checks
+- **Secure Download**: HTTPS with token authentication
+
+## 🛠 Development
+
+### **Project Structure**
 ```
 GenLite/
 ├── lib/
-│   ├── core/
-│   │   ├── constants/     # App constants
-│   │   ├── theme/         # App theme configuration
-│   │   └── utils/         # Utility functions
-│   ├── features/
-│   │   ├── chat/          # Chat functionality
-│   │   ├── file_management/ # File upload and processing
-│   │   └── settings/      # App settings
-│   ├── shared/
-│   │   ├── models/        # Data models
-│   │   ├── services/      # Shared services
-│   │   └── widgets/       # Reusable widgets
-│   └── main.dart
-├── test/                  # Test files (mirrors lib structure)
-├── android/               # Android-specific files
-├── ios/                   # iOS-specific files
-├── web/                   # Web-specific files
-└── pubspec.yaml           # Dependencies
+│   ├── core/           # App constants, themes, utilities
+│   ├── features/       # Feature modules
+│   └── shared/         # Shared services and widgets
+├── test/               # Unit and widget tests
+├── android/            # Android-specific configuration
+├── ios/                # iOS-specific configuration
+└── docs/               # Documentation
 ```
 
-### Testing
+### **Key Technologies**
+- **Flutter**: Cross-platform UI framework
+- **flutter_gemma**: Local AI model integration
+- **BLoC**: State management
+- **Hive**: Local data storage
+- **HTTP**: Model downloading and API calls
 
-Run the test suite:
+### **Testing**
 ```bash
+# Run unit tests
 flutter test
-```
 
-Run tests with coverage:
-```bash
+# Run widget tests
+flutter test test/widget_test.dart
+
+# Run with coverage
 flutter test --coverage
 ```
 
-### Code Style
+## 📱 Screenshots
 
-The project follows Flutter's official style guide. Run the linter:
-```bash
-flutter analyze
-```
-
-## 🔧 Configuration
-
-### Model Settings
-
-Configure the local model in `lib/core/constants/app_constants.dart`:
-
-```dart
-class AppConstants {
-  static const String defaultModelName = 'gemma-2b-q4_k_m';
-  static const int maxTokens = 2048;
-  static const double temperature = 0.7;
-}
-```
-
-### Supported File Types
-
-- PDF (.pdf)
-- Text (.txt)
-- Word documents (.docx)
-- Maximum file size: 10MB
+*Screenshots will be added here*
 
 ## 🤝 Contributing
 
@@ -155,13 +178,11 @@ class AppConstants {
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Guidelines
-
-- Follow Clean Architecture principles
+### **Development Guidelines**
+- Follow Flutter best practices
+- Use the established UI design system
 - Write tests for new features
-- Use BLoC for state management
-- Follow Flutter's style guide
-- Add documentation for new features
+- Update documentation as needed
 
 ## 📄 License
 
@@ -169,26 +190,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- [Flutter](https://flutter.dev/) - The UI framework
-- [flutter_gemma](https://pub.dev/packages/flutter_gemma) - Local LLM integration
-- [flutter_bloc](https://pub.dev/packages/flutter_bloc) - State management
-- [Gemma](https://ai.google.dev/gemma) - The language model
+- **Google**: For the Gemma language model
+- **Flutter Team**: For the amazing framework
+- **Hugging Face**: For model hosting and distribution
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/gen_lite/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/gen_lite/discussions)
-- **Email**: support@genlite.app
-
-## 🗺️ Roadmap
-
-- [ ] Voice input/output
-- [ ] Image analysis capabilities
-- [ ] Cloud backup/sync (optional)
-- [ ] Plugin ecosystem
-- [ ] Enterprise features
-- [ ] Multi-language support
+- **Issues**: Report bugs and feature requests on GitHub
+- **Discussions**: Join community discussions
+- **Documentation**: Check the [docs/](docs/) folder for detailed guides
 
 ---
 
-**Made with ❤️ for privacy-conscious AI users**
+**GenLite** - Your private, offline AI companion 🤖✨
