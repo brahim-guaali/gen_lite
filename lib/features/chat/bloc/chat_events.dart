@@ -64,3 +64,60 @@ class DeleteConversation extends ChatEvent {
   @override
   List<Object?> get props => [conversationId];
 }
+
+class LoadConversations extends ChatEvent {}
+
+class SearchConversations extends ChatEvent {
+  final String query;
+
+  const SearchConversations(this.query);
+
+  @override
+  List<Object?> get props => [query];
+}
+
+class ExportConversation extends ChatEvent {
+  final String conversationId;
+  final String format; // 'txt', 'pdf', 'json'
+
+  const ExportConversation({
+    required this.conversationId,
+    required this.format,
+  });
+
+  @override
+  List<Object?> get props => [conversationId, format];
+}
+
+class ClearConversationHistory extends ChatEvent {}
+
+class SetActiveAgent extends ChatEvent {
+  final String agentId;
+
+  const SetActiveAgent(this.agentId);
+
+  @override
+  List<Object?> get props => [agentId];
+}
+
+class AddFileContext extends ChatEvent {
+  final String fileId;
+  final String fileContent;
+
+  const AddFileContext({
+    required this.fileId,
+    required this.fileContent,
+  });
+
+  @override
+  List<Object?> get props => [fileId, fileContent];
+}
+
+class RemoveFileContext extends ChatEvent {
+  final String fileId;
+
+  const RemoveFileContext(this.fileId);
+
+  @override
+  List<Object?> get props => [fileId];
+}
