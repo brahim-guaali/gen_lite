@@ -71,8 +71,8 @@ class EnhancedModelDownloader {
   static const String _downloadStatePrefix = 'download_state_';
 
   static Future<String> ensureGemmaModel({
-    String modelId = 'google/gemma-2b-it',
-    String filename = 'gemma-2b-it.gguf',
+    String modelId = 'google/gemma-3n-E4B-it-litert-preview',
+    String filename = 'gemma-3n-E4B-it-int4.task',
     void Function(ProgressInfo info)? onProgress,
     int maxRetries = 3,
     bool allowResume = true,

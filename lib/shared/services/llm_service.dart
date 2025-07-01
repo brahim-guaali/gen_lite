@@ -1,10 +1,12 @@
 // This service integrates flutter_gemma for local LLM inference.
-// Ensure you have a compatible Gemma model file (e.g., gemma-2b-it-q4_k_m.bin) at the expected path.
+// Ensure you have a compatible Gemma model file (e.g., gemma-3n-E4B-it-int4.task) at the expected path.
 
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_gemma/core/model.dart';
+import 'package:flutter_gemma/core/chat.dart';
 import 'package:flutter_gemma/flutter_gemma.dart'
     show
         FlutterGemmaPlugin,
@@ -27,97 +29,198 @@ class LLMService {
 
   /// Initialize and load the Gemma model from the given path (or default location)
   Future<void> initialize({String? modelPath}) async {
-    if (_isReady || _isLoading) return;
+    if (_isLoading) {
+      print('[LLMService] Already initializing...');
+      return;
+    }
+
+    if (_isReady && _model != null) {
+      print('[LLMService] Model already initialized');
+      return;
+    }
+
     _isLoading = true;
+    print('[LLMService] Initializing LLM service...');
+
     try {
-      // Use provided modelPath or default app directory
+      // Use provided model path or default to the expected location
       _modelPath = modelPath ?? await _getDefaultModelPath();
-      print('[LLMService] Model path: $_modelPath');
+
+      print('[LLMService] Using model path: $_modelPath');
+
+      // Check if model file exists
       final modelFile = File(_modelPath!);
-      if (await modelFile.exists()) {
-        final size = await modelFile.length();
-        print(
-            '[LLMService] Model file exists. Size: ${size / (1024 * 1024)} MB');
-      } else {
-        print('[LLMService] Model file does NOT exist at path: $_modelPath');
+      if (!await modelFile.exists()) {
+        throw Exception('Model file not found at: $_modelPath');
       }
-      // Only load if not already loaded
-      if (_model == null) {
-        _model = await FlutterGemmaPlugin.instance.createModel(
-          modelType: ModelType.gemmaIt, // Use Gemma 2B IT for chat
-          preferredBackend: PreferredBackend.gpu, // Use GPU if available
-          maxTokens: 1024,
-        );
-      }
+
+      final fileSize = await modelFile.length();
+      print('[LLMService] Model file size: ${_formatBytes(fileSize)}');
+
+      // Initialize the FlutterGemma plugin
+      final gemma = FlutterGemmaPlugin.instance;
+
+      // Register the model path with the modelManager before loading
+      print('[LLMService] Registering model path with modelManager...');
+      await gemma.modelManager.setModelPath(_modelPath!);
+      print('[LLMService] Model path registered successfully');
+
+      // Create model with the correct type for Gemma 3N
+      _model = await gemma.createModel(
+        modelType: ModelType.gemmaIt,
+        supportImage: true,
+        maxTokens: 2048,
+      );
+
+      print('[LLMService] Model created successfully');
       _isReady = true;
-    } catch (e) {
-      _isReady = false;
-      rethrow;
-    } finally {
       _isLoading = false;
+
+      print('[LLMService] LLM service initialized successfully');
+    } catch (e) {
+      _isLoading = false;
+      _isReady = false;
+      print('[LLMService] Error initializing LLM service: $e');
+      rethrow;
     }
   }
 
-  /// Get the default model path (e.g., app documents directory + /gemma2b/model.bin)
+  /// Get the default model path based on the expected location
   Future<String> _getDefaultModelPath() async {
-    final dir = await getApplicationDocumentsDirectory();
-    return '${dir.path}/gemma2b/model.bin';
+    final directory = await getApplicationDocumentsDirectory();
+    return '${directory.path}/gemma-3n-E4B-it-int4.task';
   }
 
-  /// Check if the model is ready
-  Future<bool> isReady() async {
-    return _isReady;
+  /// Check if the service is ready to process requests
+  bool get isReady => _isReady && _model != null;
+
+  /// Get the current model instance
+  InferenceModel? get model => _model;
+
+  /// Create a new chat session
+  Future<InferenceChat?> createChat({bool supportImage = true}) async {
+    if (!isReady) {
+      print('[LLMService] Service not ready. Call initialize() first.');
+      return null;
+    }
+
+    try {
+      final chat = await _model!.createChat(supportImage: supportImage);
+      print('[LLMService] Chat session created successfully');
+      return chat;
+    } catch (e) {
+      print('[LLMService] Error creating chat session: $e');
+      return null;
+    }
   }
 
-  /// Generate a response for a chat message (single-turn, not streaming)
-  Future<String> processMessage(String message,
-      {String? agentPrompt, String? fileContext}) async {
-    if (!_isReady) {
-      throw Exception('LLM model not loaded. Call initialize() first.');
+  /// Process a text message
+  Future<String?> processMessage(String message, {InferenceChat? chat}) async {
+    if (!isReady) {
+      print('[LLMService] Service not ready. Call initialize() first.');
+      return null;
     }
-    // Compose prompt with agent or file context if provided
-    String prompt = message;
-    if (agentPrompt != null) {
-      prompt = '$agentPrompt\n$message';
-    } else if (fileContext != null) {
-      prompt = 'Document context: $fileContext\n$message';
+
+    try {
+      final chatSession = chat ?? await createChat();
+      if (chatSession == null) {
+        throw Exception('Failed to create chat session');
+      }
+
+      // Create message object
+      final messageObj = Message(text: message, isUser: true);
+
+      // Add message to chat
+      await chatSession.addQueryChunk(messageObj);
+
+      // Generate response
+      final responseStream = chatSession.generateChatResponseAsync();
+
+      String response = '';
+      await for (final token in responseStream) {
+        response += token;
+      }
+
+      return response;
+    } catch (e) {
+      print('[LLMService] Error processing message: $e');
+      return null;
     }
-    final session = await _model!.createSession();
-    await session.addQueryChunk(Message.text(text: prompt, isUser: true));
-    final response = await session.getResponse();
-    await session.close();
-    return response;
   }
 
-  /// Stream response for real-time output (token streaming)
-  Stream<String> streamResponse(String message,
-      {String? agentPrompt, String? fileContext}) async* {
-    if (!_isReady) {
-      throw Exception('LLM model not loaded. Call initialize() first.');
+  /// Process a message with image
+  Future<String?> processMessageWithImage(String message, Uint8List imageBytes,
+      {InferenceChat? chat}) async {
+    if (!isReady) {
+      print('[LLMService] Service not ready. Call initialize() first.');
+      return null;
     }
-    String prompt = message;
-    if (agentPrompt != null) {
-      prompt = '$agentPrompt\n$message';
-    } else if (fileContext != null) {
-      prompt = 'Document context: $fileContext\n$message';
+
+    try {
+      final chatSession = chat ?? await createChat(supportImage: true);
+      if (chatSession == null) {
+        throw Exception('Failed to create chat session');
+      }
+
+      // Create message object with image
+      final messageObj = Message.withImage(
+        text: message,
+        imageBytes: imageBytes,
+        isUser: true,
+      );
+
+      // Add message to chat
+      await chatSession.addQueryChunk(messageObj);
+
+      // Generate response
+      final responseStream = chatSession.generateChatResponseAsync();
+
+      String response = '';
+      await for (final token in responseStream) {
+        response += token;
+      }
+
+      return response;
+    } catch (e) {
+      print('[LLMService] Error processing message with image: $e');
+      return null;
     }
-    final session = await _model!.createSession();
-    await session.addQueryChunk(Message.text(text: prompt, isUser: true));
-    await for (final token in session.getResponseAsync()) {
-      yield token;
+  }
+
+  /// Dispose of the model and clean up resources
+  Future<void> dispose() async {
+    try {
+      _model = null;
+      _isReady = false;
+      _isLoading = false;
+      print('[LLMService] Service disposed successfully');
+    } catch (e) {
+      print('[LLMService] Error disposing service: $e');
     }
-    await session.close();
   }
 
   /// Get model information
   Map<String, dynamic> getModelInfo() {
     return {
-      'name': 'Gemma 2B',
-      'version': 'real',
-      'parameters': '2B',
+      'name': 'Gemma 3N',
+      'version': '3N',
+      'parameters': '3B',
       'context_length': 8192,
       'status': _isReady ? 'ready' : 'not ready',
       'model_path': _modelPath,
     };
+  }
+
+  /// Helper method to format bytes
+  String _formatBytes(int bytes) {
+    if (bytes >= 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
+    } else if (bytes >= 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
+    } else if (bytes >= 1024) {
+      return '${(bytes / 1024).toStringAsFixed(2)} KB';
+    } else {
+      return '$bytes B';
+    }
   }
 }

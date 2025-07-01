@@ -22,8 +22,8 @@ class ProgressInfo {
 /// Ensures the Gemma model file is present locally. Downloads from Hugging Face if missing.
 /// Returns the local file path.
 Future<String> ensureGemmaModel({
-  String modelId = 'google/gemma-2b-it',
-  String filename = 'gemma-2b-it.gguf',
+  String modelId = 'google/gemma-3n-E4B-it-litert-preview',
+  String filename = 'gemma-3n-E4B-it-int4.task',
 }) async {
   return ensureGemmaModelWithProgress(
     modelId: modelId,
@@ -34,8 +34,8 @@ Future<String> ensureGemmaModel({
 
 /// Enhanced version: supports progress and retry logic.
 Future<String> ensureGemmaModelWithProgress({
-  String modelId = 'google/gemma-2b-it',
-  String filename = 'gemma-2b-it.gguf',
+  String modelId = 'google/gemma-3n-E4B-it-litert-preview',
+  String filename = 'gemma-3n-E4B-it-int4.task',
   void Function(ProgressInfo info)? onProgress,
   int maxRetries = 3,
 }) async {

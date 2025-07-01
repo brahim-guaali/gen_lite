@@ -4,6 +4,11 @@ import '../../core/constants/app_constants.dart';
 import 'ui_components.dart';
 import '../services/enhanced_model_downloader.dart';
 import '../services/llm_service.dart';
+import '../../shared/services/gemma_downloader.dart';
+import 'package:flutter_gemma/flutter_gemma.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'dart:io';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DownloadScreen extends StatefulWidget {
   final VoidCallback onDownloadComplete;
@@ -39,6 +44,9 @@ class _DownloadScreenState extends State<DownloadScreen>
   late AnimationController _slideController;
   late Animation<double> _slideAnimation;
 
+  late final GemmaDownloaderDataSource _downloaderDataSource;
+  double? _downloadProgress;
+
   @override
   void initState() {
     super.initState();
@@ -61,8 +69,16 @@ class _DownloadScreenState extends State<DownloadScreen>
     ));
 
     _slideController.forward();
-    _checkExistingDownload();
     _startSkipTimer();
+
+    _downloaderDataSource = GemmaDownloaderDataSource(
+      model: DownloadModel(
+        modelUrl:
+            'https://huggingface.co/google/gemma-3n-E4B-it-litert-preview/resolve/main/gemma-3n-E4B-it-int4.task',
+        modelFilename: 'gemma-3n-E4B-it-int4.task',
+      ),
+    );
+    _initializeModel();
   }
 
   @override
@@ -83,56 +99,50 @@ class _DownloadScreenState extends State<DownloadScreen>
     });
   }
 
-  Future<void> _checkExistingDownload() async {
-    final hasIncomplete = await EnhancedModelDownloader.hasIncompleteDownload(
-      'google/gemma-2b-it',
-      'gemma-2b-it.gguf',
-    );
-
-    if (hasIncomplete) {
-      final state = await EnhancedModelDownloader.getDownloadState(
-        'google/gemma-2b-it',
-        'gemma-2b-it.gguf',
-      );
-
-      if (state != null && mounted) {
-        setState(() {
-          _existingDownloadState = state;
-          _receivedBytes = state.downloadedBytes;
-          _totalBytes = state.totalBytes;
-          _progress = state.downloadedBytes / state.totalBytes;
-        });
-      }
-    }
-
-    _startDownload();
-  }
-
-  Future<void> _startDownload() async {
-    setState(() {
-      _isDownloading = true;
-      _hasError = false;
-      _errorMessage = null;
-    });
-
+  Future<void> _initializeModel() async {
     try {
-      final modelPath = await EnhancedModelDownloader.ensureGemmaModel(
-        onProgress: (info) {
-          if (mounted) {
-            setState(() {
-              _progress = info.progress;
-              _receivedBytes = info.receivedBytes;
-              _totalBytes = info.totalBytes;
-              _speed = info.speedBytesPerSec;
-              _elapsed = info.elapsed;
-              _isResuming = info.isResuming;
-              _status = info.status;
-            });
-          }
-        },
-      );
+      final gemma = FlutterGemmaPlugin.instance;
+      final isModelInstalled =
+          await _downloaderDataSource.checkModelExistence();
 
-      // Initialize LLM service
+      if (!isModelInstalled) {
+        setState(() {
+          _isDownloading = true;
+          _status = 'Downloading Gemma 3N...';
+        });
+
+        final token = dotenv.env['HUGGINGFACE_TOKEN'] ?? '';
+        if (token.isEmpty) {
+          throw Exception(
+              'Hugging Face token not found. Please check your .env file.');
+        }
+
+        await _downloaderDataSource.downloadModel(
+          token: token,
+          onProgress: (progress) {
+            if (mounted) {
+              setState(() {
+                _downloadProgress = progress;
+                _progress = progress;
+                _status =
+                    'Downloading... ${(progress * 100).toStringAsFixed(1)}%';
+              });
+            }
+          },
+        );
+      }
+
+      setState(() {
+        _status = 'Initializing model...';
+        _downloadProgress = null;
+      });
+
+      final modelPath = await _downloaderDataSource.getFilePath();
+      final file = File(modelPath);
+      print('File exists: ${await file.exists()}');
+      print('File size: ${await file.length()}');
+
+      // Initialize LLM service with the model path
       await LLMService().initialize(modelPath: modelPath);
 
       if (mounted) {
@@ -153,15 +163,25 @@ class _DownloadScreenState extends State<DownloadScreen>
     setState(() {
       _hasError = false;
       _errorMessage = null;
+      _progress = 0.0;
+      _downloadProgress = null;
     });
-    await _startDownload();
+    await _initializeModel();
   }
 
   Future<void> _clearAndRestart() async {
-    await EnhancedModelDownloader.clearDownloadState(
-      'google/gemma-2b-it',
-      'gemma-2b-it.gguf',
-    );
+    // Clear any existing download state
+    final prefs = await SharedPreferences.getInstance();
+    final preferenceKey = 'model_downloaded_gemma-3n-E4B-it-int4.task';
+    await prefs.remove(preferenceKey);
+
+    // Delete the model file if it exists
+    final modelPath = await _downloaderDataSource.getFilePath();
+    final file = File(modelPath);
+    if (await file.exists()) {
+      await file.delete();
+    }
+
     setState(() {
       _progress = 0.0;
       _receivedBytes = 0;
@@ -171,8 +191,9 @@ class _DownloadScreenState extends State<DownloadScreen>
       _status = null;
       _isResuming = false;
       _existingDownloadState = null;
+      _downloadProgress = null;
     });
-    await _startDownload();
+    await _initializeModel();
   }
 
   String _formatBytes(int bytes) {
@@ -330,30 +351,6 @@ class _DownloadScreenState extends State<DownloadScreen>
 
     return Column(
       children: [
-        if (_isResuming) ...[
-          AppCard(
-            backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.refresh,
-                  color: AppConstants.accentColor,
-                ),
-                const SizedBox(width: AppConstants.paddingMedium),
-                Expanded(
-                  child: Text(
-                    'Resuming download from ${_formatBytes(_receivedBytes)}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppConstants.accentColor,
-                          fontWeight: FontWeight.w500,
-                        ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppConstants.paddingMedium),
-        ],
         AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,60 +383,21 @@ class _DownloadScreenState extends State<DownloadScreen>
               ),
               const SizedBox(height: AppConstants.paddingMedium),
 
-              // Download stats
-              _buildDownloadStats(),
+              // Status
+              if (_status != null)
+                Text(
+                  _status!,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.7),
+                      ),
+                ),
             ],
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildDownloadStats() {
-    return Container(
-      height: 120, // Fixed height to prevent layout shifts
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildStatRow('Downloaded',
-              '${_formatBytes(_receivedBytes)} / ${_formatBytes(_totalBytes)}'),
-          _buildStatRow('Speed', _formatSpeed(_speed)),
-          _buildStatRow('Elapsed', _formatElapsed(_elapsed)),
-          _buildStatRow('Status', _status ?? ''),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppConstants.paddingSmall),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.7),
-                ),
-          ),
-          const SizedBox(width: AppConstants.paddingMedium),
-          Expanded(
-            child: Text(
-              value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.fade,
-              textAlign: TextAlign.end,
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -453,14 +411,12 @@ class _DownloadScreenState extends State<DownloadScreen>
             onPressed: _retryDownload,
           ),
           const SizedBox(height: AppConstants.paddingMedium),
-          if (_existingDownloadState != null) ...[
-            SecondaryButton(
-              text: 'Clear and Restart',
-              icon: Icons.clear,
-              onPressed: _clearAndRestart,
-            ),
-            const SizedBox(height: AppConstants.paddingMedium),
-          ],
+          SecondaryButton(
+            text: 'Clear and Restart',
+            icon: Icons.clear,
+            onPressed: _clearAndRestart,
+          ),
+          const SizedBox(height: AppConstants.paddingMedium),
           DangerButton(
             text: 'Skip for Now',
             icon: Icons.skip_next,

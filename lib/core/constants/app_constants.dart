@@ -57,7 +57,7 @@ class AppConstants {
   static const Duration animationSlow = Duration(milliseconds: 500);
 
   // Model Configuration
-  static const String defaultModelName = 'gemma-2b-it-q4_k_m';
+  static const String defaultModelName = 'gemma-3n-E4B-it-int4.task';
   static const int maxTokens = 2048;
   static const double temperature = 0.7;
 
