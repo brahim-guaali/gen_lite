@@ -16,6 +16,12 @@ A privacy-focused, offline AI assistant that runs entirely on your device using 
 - **⬇️ Smart Downloads**: Resume interrupted model downloads automatically
 - **🎨 Professional UX**: Unified design system with smooth interactions
 
+
+
+https://github.com/user-attachments/assets/62d33866-872f-4295-9ae8-91752b4d980e
+
+
+
 ## 🚀 Quick Start
 
 ### Prerequisites
