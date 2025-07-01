@@ -2,8 +2,8 @@
 ## GenLite: Offline AI Assistant
 
 **Version:** 2.0  
-**Date:** December 2024  
-**Product Owner:** GenLite Team  
+**Date:** July 2025  
+**Product Owner:** Brahim Guaali  
 **Stakeholders:** Privacy-conscious users, AI enthusiasts, mobile developers  
 
 ---
@@ -271,145 +271,27 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 
 ---
 
-## 6. Technical Architecture
+## 6. Success Metrics
 
-### 6.1 Platform Requirements
-
-#### 6.1.1 iOS
-- **Minimum Version**: iOS 16.0
-- **Deployment Target**: iOS 16.0+
-- **Architecture**: ARM64
-- **Capabilities**: Local file access, background processing
-
-#### 6.1.2 Android
-- **Minimum SDK**: API 26 (Android 8.0)
-- **Target SDK**: API 34 (Android 14)
-- **Architecture**: ARM64, x86_64
-- **Permissions**: Storage, network (download only)
-
-### 6.2 Technology Stack
-
-#### 6.2.1 Frontend
-- **Framework**: Flutter 3.2.0+
-- **State Management**: BLoC pattern
-- **UI Framework**: Material 3
-- **Navigation**: Flutter Navigation 2.0
-
-#### 6.2.2 Backend (Local)
-- **AI Model**: Gemma 2B (quantized)
-- **Storage**: SharedPreferences, Hive
-- **File Processing**: PDF, DOCX parsing libraries
-- **HTTP Client**: Dio for downloads
-
-#### 6.2.3 External Dependencies
-- **Model Source**: Hugging Face
-- **Authentication**: Hugging Face API token
-- **File Picker**: Cross-platform file selection
-
-### 6.3 Architecture Patterns
-
-#### 6.3.1 Clean Architecture
-- **Presentation Layer**: UI components and screens
-- **Business Logic Layer**: BLoC state management
-- **Data Layer**: Services and repositories
-- **Domain Layer**: Models and entities
-
-#### 6.3.2 Design Patterns
-- **BLoC Pattern**: State management
-- **Repository Pattern**: Data access
-- **Service Pattern**: Business logic
-- **Factory Pattern**: Object creation
-
----
-
-## 7. Implementation Plan
-
-### 7.1 Development Phases
-
-#### Phase 1: Core Infrastructure (Completed)
-- [x] Project setup and architecture
-- [x] Basic UI components and theme
-- [x] Model downloader with resume functionality
-- [x] BLoC state management setup
-- [x] Error handling and recovery
-
-#### Phase 2: Core Features (Completed)
-- [x] Chat interface implementation
-- [x] File management system
-- [x] Settings and agent management
-- [x] Unified UI design system
-- [x] Download screen with progress tracking
-
-#### Phase 3: Enhancement (Current)
-- [ ] Advanced conversation features
-- [ ] File export and sharing
-- [ ] Performance optimizations
-- [ ] Advanced settings
-- [ ] Accessibility improvements
-
-#### Phase 4: Polish (Future)
-- [ ] Voice input/output
-- [ ] Image analysis
-- [ ] Multi-language support
-- [ ] Cloud sync (optional)
-- [ ] Plugin system
-
-### 7.2 Testing Strategy
-
-#### 7.2.1 Unit Testing
-- **BLoC Testing**: State management logic
-- **Service Testing**: Business logic services
-- **Model Testing**: Data models and validation
-- **Utility Testing**: Helper functions
-
-#### 7.2.2 Widget Testing
-- **UI Component Testing**: Individual components
-- **Screen Testing**: Complete screen flows
-- **Integration Testing**: Feature interactions
-- **Accessibility Testing**: Screen reader compatibility
-
-#### 7.2.3 Performance Testing
-- **Memory Usage**: Monitor memory consumption
-- **Response Time**: Measure AI response times
-- **Battery Impact**: Test battery usage
-- **Storage Usage**: Monitor storage consumption
-
-### 7.3 Deployment Strategy
-
-#### 7.3.1 App Store Deployment
-- **iOS App Store**: Standard app store submission
-- **Google Play Store**: Standard play store submission
-- **Beta Testing**: TestFlight and Google Play Console
-- **Staged Rollout**: Gradual release to users
-
-#### 7.3.2 Distribution
-- **Direct Download**: APK/IPA for direct installation
-- **Enterprise Distribution**: For organizational use
-- **Open Source**: GitHub releases for developers
-
----
-
-## 8. Success Metrics
-
-### 8.1 User Engagement
+### 6.1 User Engagement
 - **Daily Active Users**: Track app usage
 - **Session Duration**: Average time per session
 - **Feature Usage**: Most used features
 - **Retention Rate**: User retention over time
 
-### 8.2 Performance Metrics
+### 6.2 Performance Metrics
 - **App Launch Time**: Time to first screen
 - **AI Response Time**: Average response time
 - **Download Success Rate**: Successful model downloads
 - **Error Rate**: Frequency of errors
 
-### 8.3 Quality Metrics
+### 6.3 Quality Metrics
 - **Crash Rate**: App stability
 - **User Ratings**: App store ratings
 - **User Feedback**: User reviews and feedback
 - **Accessibility Score**: Accessibility compliance
 
-### 8.4 Privacy Metrics
+### 6.4 Privacy Metrics
 - **Data Transmission**: Zero external data transmission
 - **Local Storage**: All data stored locally
 - **User Control**: User data control features
@@ -417,71 +299,71 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 
 ---
 
-## 9. Risk Assessment
+## 7. Risk Assessment
 
-### 9.1 Technical Risks
+### 7.1 Technical Risks
 
-#### 9.1.1 Model Performance
+#### 7.1.1 Model Performance
 - **Risk**: AI model too slow on older devices
 - **Mitigation**: Optimized quantized model, performance testing
 - **Impact**: Medium
 
-#### 9.1.2 Storage Requirements
+#### 7.1.2 Storage Requirements
 - **Risk**: 4GB model too large for some devices
 - **Mitigation**: Smaller model options, storage validation
 - **Impact**: Low
 
-#### 9.1.3 Platform Limitations
+#### 7.1.3 Platform Limitations
 - **Risk**: Platform-specific limitations
 - **Mitigation**: Cross-platform testing, platform-specific optimizations
 - **Impact**: Low
 
-### 9.2 Business Risks
+### 7.2 Business Risks
 
-#### 9.2.1 User Adoption
+#### 7.2.1 User Adoption
 - **Risk**: Limited user adoption
 - **Mitigation**: Strong privacy focus, clear value proposition
 - **Impact**: Medium
 
-#### 9.2.2 Competition
+#### 7.2.2 Competition
 - **Risk**: Competition from cloud-based solutions
 - **Mitigation**: Privacy differentiation, offline functionality
 - **Impact**: Low
 
-#### 9.2.3 Regulatory Changes
+#### 7.2.3 Regulatory Changes
 - **Risk**: Changes in privacy regulations
 - **Mitigation**: Privacy-first design, regulatory compliance
 - **Impact**: Low
 
-### 9.3 Operational Risks
+### 7.3 Operational Risks
 
-#### 9.3.1 Model Availability
+#### 7.3.1 Model Availability
 - **Risk**: Model source becomes unavailable
 - **Mitigation**: Multiple model sources, local model distribution
 - **Impact**: Medium
 
-#### 9.3.2 Development Resources
+#### 7.3.2 Development Resources
 - **Risk**: Limited development resources
 - **Mitigation**: Open source contribution, community development
 - **Impact**: Low
 
 ---
 
-## 10. Conclusion
+## 8. Conclusion
 
 GenLite represents a significant advancement in privacy-focused AI applications. The product successfully balances powerful AI capabilities with complete user privacy, providing a compelling alternative to cloud-based AI services.
 
-### 10.1 Key Achievements
+### 8.1 Key Achievements
 - **Privacy-First Design**: Complete local processing with no data transmission
 - **Professional UX**: Unified design system with smooth interactions
 - **Robust Architecture**: Clean architecture with comprehensive error handling
 - **Smart Downloads**: Resume functionality for large model downloads
 - **Cross-Platform**: Consistent experience across iOS and Android
 
-### 10.2 Future Vision
+### 8.2 Future Vision
 GenLite is positioned to become the leading privacy-focused AI assistant, with plans for voice capabilities, image analysis, and an extensible plugin system. The foundation built with clean architecture and unified design ensures scalability for future enhancements.
 
-### 10.3 Success Criteria
+### 8.3 Success Criteria
 The product will be considered successful when:
 - Users can have natural AI conversations with complete privacy
 - Model downloads are reliable and user-friendly
@@ -492,6 +374,6 @@ The product will be considered successful when:
 ---
 
 **Document Version:** 2.0  
-**Last Updated:** December 2024  
-**Next Review:** January 2025  
+**Last Updated:** July 2025  
+**Next Review:** August 2025  
 **Approval Status:** Approved 
