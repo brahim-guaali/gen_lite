@@ -3,17 +3,60 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import '../models/message.dart';
 import '../../core/constants/app_constants.dart';
 
-class MessageBubble extends StatelessWidget {
+class MessageBubble extends StatefulWidget {
   final Message message;
+  final bool isStreaming;
 
   const MessageBubble({
     super.key,
     required this.message,
+    this.isStreaming = false,
   });
 
   @override
+  State<MessageBubble> createState() => _MessageBubbleState();
+}
+
+class _MessageBubbleState extends State<MessageBubble>
+    with TickerProviderStateMixin {
+  late AnimationController _typingController;
+  late Animation<double> _typingAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _typingController = AnimationController(
+      duration: const Duration(milliseconds: 1500),
+      vsync: this,
+    );
+    _typingAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _typingController, curve: Curves.easeInOut),
+    );
+
+    if (widget.isStreaming) {
+      _typingController.repeat();
+    }
+  }
+
+  @override
+  void didUpdateWidget(MessageBubble oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isStreaming && !oldWidget.isStreaming) {
+      _typingController.repeat();
+    } else if (!widget.isStreaming && oldWidget.isStreaming) {
+      _typingController.stop();
+    }
+  }
+
+  @override
+  void dispose() {
+    _typingController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isUser = message.role == MessageRole.user;
+    final isUser = widget.message.role == MessageRole.user;
     final theme = Theme.of(context);
 
     return Padding(
@@ -95,36 +138,86 @@ class MessageBubble extends StatelessWidget {
                   const SizedBox(height: AppConstants.paddingSmall),
                   if (isUser)
                     Text(
-                      message.content,
+                      widget.message.content,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
                       ),
                     )
                   else
-                    MarkdownBody(
-                      data: message.content,
-                      styleSheet: MarkdownStyleSheet(
-                        p: TextStyle(
-                          color: theme.textTheme.bodyLarge?.color,
-                          fontSize: 16,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        MarkdownBody(
+                          data: widget.message.content,
+                          styleSheet: MarkdownStyleSheet(
+                            p: TextStyle(
+                              color: theme.textTheme.bodyLarge?.color,
+                              fontSize: 16,
+                            ),
+                            code: TextStyle(
+                              backgroundColor: theme.colorScheme.surface,
+                              color: theme.textTheme.bodyLarge?.color,
+                              fontSize: 14,
+                            ),
+                            codeblockDecoration: BoxDecoration(
+                              color: theme.colorScheme.surface,
+                              borderRadius: BorderRadius.circular(
+                                  AppConstants.borderRadiusSmall),
+                            ),
+                          ),
+                          shrinkWrap: true,
                         ),
-                        code: TextStyle(
-                          backgroundColor: theme.colorScheme.surface,
-                          color: theme.textTheme.bodyLarge?.color,
-                          fontSize: 14,
-                        ),
-                        codeblockDecoration: BoxDecoration(
-                          color: theme.colorScheme.surface,
-                          borderRadius: BorderRadius.circular(
-                              AppConstants.borderRadiusSmall),
-                        ),
-                      ),
-                      shrinkWrap: true,
+                        if (widget.isStreaming) ...[
+                          const SizedBox(height: AppConstants.paddingSmall),
+                          AnimatedBuilder(
+                            animation: _typingAnimation,
+                            builder: (context, child) {
+                              return Row(
+                                children: [
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: theme.textTheme.bodySmall?.color
+                                          ?.withOpacity(0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: theme.textTheme.bodySmall?.color
+                                          ?.withOpacity(
+                                        _typingAnimation.value * 0.5 + 0.3,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Container(
+                                    width: 4,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: theme.textTheme.bodySmall?.color
+                                          ?.withOpacity(
+                                        _typingAnimation.value * 0.5 + 0.3,
+                                      ),
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ],
                     ),
                   const SizedBox(height: AppConstants.paddingSmall),
                   Text(
-                    _formatTimestamp(message.timestamp),
+                    _formatTimestamp(widget.message.timestamp),
                     style: TextStyle(
                       fontSize: 11,
                       color: isUser

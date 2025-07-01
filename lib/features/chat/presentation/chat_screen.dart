@@ -10,6 +10,9 @@ import '../../../shared/widgets/message_bubble.dart';
 import '../../../shared/widgets/loading_indicator.dart';
 import '../../../shared/widgets/ui_components.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../settings/bloc/agent_bloc.dart';
+import '../../settings/bloc/agent_events.dart';
+import '../../settings/bloc/agent_states.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -63,8 +66,88 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('GenLite'),
+        title: BlocBuilder<AgentBloc, AgentState>(
+          builder: (context, agentState) {
+            if (agentState is AgentLoaded && agentState.activeAgent != null) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('GenLite'),
+                  Text(
+                    agentState.activeAgent!.name,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.7),
+                        ),
+                  ),
+                ],
+              );
+            }
+            return const Text('GenLite');
+          },
+        ),
         actions: [
+          BlocBuilder<AgentBloc, AgentState>(
+            builder: (context, agentState) {
+              if (agentState is AgentLoaded && agentState.agents.isNotEmpty) {
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.smart_toy),
+                  tooltip: 'Switch Agent',
+                  onSelected: (agentId) {
+                    if (agentId == 'none') {
+                      context.read<AgentBloc>().add(SetActiveAgent(''));
+                    } else {
+                      context.read<AgentBloc>().add(SetActiveAgent(agentId));
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    ...agentState.agents.map((agent) => PopupMenuItem(
+                          value: agent.id,
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.smart_toy,
+                                size: 16,
+                                color: agentState.activeAgent?.id == agent.id
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(child: Text(agent.name)),
+                              if (agentState.activeAgent?.id == agent.id)
+                                Icon(
+                                  Icons.check,
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                            ],
+                          ),
+                        )),
+                    const PopupMenuDivider(),
+                    PopupMenuItem(
+                      value: 'none',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.person, size: 16),
+                          const SizedBox(width: 8),
+                          const Text('Default AI'),
+                          if (agentState.activeAgent == null)
+                            Icon(
+                              Icons.check,
+                              size: 16,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.folder_open),
             onPressed: () => Navigator.pushNamed(context, '/files'),
@@ -162,40 +245,20 @@ class _ChatScreenState extends State<ChatScreen> {
                   return ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(AppConstants.paddingMedium),
-                    itemCount: messages.length + (state.isProcessing ? 1 : 0),
+                    itemCount: messages.length,
                     itemBuilder: (context, index) {
-                      if (index == messages.length && state.isProcessing) {
-                        return Padding(
-                          padding:
-                              const EdgeInsets.all(AppConstants.paddingMedium),
-                          child: Row(
-                            children: [
-                              const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                              const SizedBox(width: AppConstants.paddingMedium),
-                              Text(
-                                'AI is thinking...',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.7),
-                                    ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
                       final message = messages[index];
-                      return MessageBubble(message: message);
+
+                      // Check if this is the last message and it's an assistant message being streamed
+                      final isLastMessage = index == messages.length - 1;
+                      final isStreamingAssistant = isLastMessage &&
+                          message.role == MessageRole.assistant &&
+                          state.isProcessing;
+
+                      return MessageBubble(
+                        message: message,
+                        isStreaming: isStreamingAssistant,
+                      );
                     },
                   );
                 }

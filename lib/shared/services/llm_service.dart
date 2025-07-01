@@ -114,37 +114,73 @@ class LLMService {
     }
   }
 
-  /// Process a text message
-  Future<String?> processMessage(String message, {InferenceChat? chat}) async {
+  /// Process a text message with streaming support
+  Future<String?> processMessage(
+    String message, {
+    InferenceChat? chat,
+    Function(String token)? onTokenReceived,
+  }) async {
     if (!isReady) {
       print('[LLMService] Service not ready. Call initialize() first.');
       return null;
     }
 
     try {
+      print(
+          '[LLMService] Processing message: "${message.substring(0, message.length > 50 ? 50 : message.length)}..."');
+
       final chatSession = chat ?? await createChat();
       if (chatSession == null) {
         throw Exception('Failed to create chat session');
       }
 
+      print('[LLMService] Chat session ready, creating message object...');
+
       // Create message object
       final messageObj = Message(text: message, isUser: true);
 
+      print('[LLMService] Adding message to chat...');
       // Add message to chat
       await chatSession.addQueryChunk(messageObj);
 
+      print('[LLMService] Starting response generation...');
       // Generate response
       final responseStream = chatSession.generateChatResponseAsync();
 
       String response = '';
-      await for (final token in responseStream) {
-        response += token;
+      bool hasReceivedTokens = false;
+
+      // Process stream with timeout
+      try {
+        await for (final token in responseStream.timeout(
+          const Duration(seconds: 30),
+        )) {
+          hasReceivedTokens = true;
+          response += token;
+
+          // Call the callback function if provided
+          if (onTokenReceived != null) {
+            onTokenReceived(token);
+          }
+
+          print('[LLMService] Received token: "$token"');
+        }
+      } on TimeoutException {
+        print('[LLMService] Response generation timed out after 30 seconds');
+        return 'I apologize, but the response is taking too long. Please try a shorter message or try again later.';
       }
 
+      if (!hasReceivedTokens) {
+        print('[LLMService] No tokens received from response stream');
+        return 'I apologize, but I was unable to generate a response. Please try again.';
+      }
+
+      print(
+          '[LLMService] Response generation completed. Total response length: ${response.length}');
       return response;
     } catch (e) {
       print('[LLMService] Error processing message: $e');
-      return null;
+      return 'Sorry, I encountered an error while processing your message. Please try again.';
     }
   }
 

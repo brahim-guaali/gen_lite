@@ -25,6 +25,15 @@ class SendMessage extends ChatEvent {
   List<Object?> get props => [content];
 }
 
+class UpdateStreamingMessage extends ChatEvent {
+  final String token;
+
+  const UpdateStreamingMessage({required this.token});
+
+  @override
+  List<Object?> get props => [token];
+}
+
 class LoadConversation extends ChatEvent {
   final String conversationId;
 
@@ -90,15 +99,6 @@ class ExportConversation extends ChatEvent {
 }
 
 class ClearConversationHistory extends ChatEvent {}
-
-class SetActiveAgent extends ChatEvent {
-  final String agentId;
-
-  const SetActiveAgent(this.agentId);
-
-  @override
-  List<Object?> get props => [agentId];
-}
 
 class AddFileContext extends ChatEvent {
   final String fileId;

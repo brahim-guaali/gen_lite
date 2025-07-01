@@ -8,6 +8,8 @@ import 'features/chat/presentation/chat_screen.dart';
 import 'features/file_management/bloc/file_bloc.dart';
 import 'features/file_management/presentation/file_management_screen.dart';
 import 'features/settings/bloc/agent_bloc.dart';
+import 'features/settings/bloc/agent_events.dart';
+import 'features/settings/bloc/agent_states.dart';
 import 'features/settings/presentation/agent_management_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
 import 'shared/services/storage_service.dart';
@@ -75,7 +77,8 @@ class _GenLiteAppState extends State<GenLiteApp> {
       providers: [
         BlocProvider(create: (context) => ChatBloc()),
         BlocProvider(create: (context) => FileBloc()),
-        BlocProvider(create: (context) => AgentBloc()),
+        BlocProvider(
+            create: (context) => AgentBloc()..add(LoadAgentTemplates())),
       ],
       child: const MainScreen(),
     );
@@ -100,26 +103,39 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.chat),
-            label: 'Chat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.folder),
-            label: 'Files',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
-        ],
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<AgentBloc, AgentState>(
+          listener: (context, state) {
+            if (state is AgentLoaded) {
+              // Update the chat bloc with the active agent
+              final chatBloc = context.read<ChatBloc>();
+              chatBloc.setActiveAgent(state.activeAgent);
+            }
+          },
+        ),
+      ],
+      child: Scaffold(
+        body: _screens[_currentIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.folder),
+              label: 'Files',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.settings),
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }
