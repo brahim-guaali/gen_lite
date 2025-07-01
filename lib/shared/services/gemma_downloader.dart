@@ -69,6 +69,9 @@ class GemmaDownloaderDataSource {
   Future<void> downloadModel({
     required String token,
     required Function(double) onProgress,
+    Function(int receivedBytes, int totalBytes, double speedBytesPerSec,
+            Duration elapsed)?
+        onDetailedProgress,
   }) async {
     http.StreamedResponse? response;
     IOSink? fileSink;
@@ -99,11 +102,28 @@ class GemmaDownloaderDataSource {
         fileSink = file.openWrite(mode: FileMode.append);
 
         int received = downloadedBytes;
+        final stopwatch = Stopwatch()..start();
+        int lastReceived = received;
+        int lastMillis = 0;
 
         await for (final chunk in response.stream) {
           fileSink.add(chunk);
           received += chunk.length;
+
+          final elapsed = stopwatch.elapsed;
+          final millis = elapsed.inMilliseconds;
+
+          double speed = 0;
+          if (millis > lastMillis) {
+            final deltaBytes = received - lastReceived;
+            final deltaMillis = millis - lastMillis;
+            speed = deltaMillis > 0 ? deltaBytes / (deltaMillis / 1000) : 0;
+            lastReceived = received;
+            lastMillis = millis;
+          }
+
           onProgress(totalBytes > 0 ? received / totalBytes : 0.0);
+          onDetailedProgress?.call(received, totalBytes, speed, elapsed);
         }
         await prefs.setBool(_preferenceKey, true);
       } else {

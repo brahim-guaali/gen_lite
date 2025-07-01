@@ -16,8 +16,6 @@ class AcceptTerms extends OnboardingEvent {}
 
 class CompleteDownload extends OnboardingEvent {}
 
-class SkipDownload extends OnboardingEvent {}
-
 // States
 abstract class OnboardingState extends Equatable {
   const OnboardingState();
@@ -53,7 +51,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     on<CheckOnboardingStatus>(_onCheckOnboardingStatus);
     on<AcceptTerms>(_onAcceptTerms);
     on<CompleteDownload>(_onCompleteDownload);
-    on<SkipDownload>(_onSkipDownload);
   }
 
   Future<void> _onCheckOnboardingStatus(
@@ -95,18 +92,6 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
 
   Future<void> _onCompleteDownload(
     CompleteDownload event,
-    Emitter<OnboardingState> emit,
-  ) async {
-    try {
-      await StorageService.saveSetting('hasCompletedDownload', true);
-      emit(OnboardingWelcomeScreen());
-    } catch (e) {
-      emit(OnboardingError(e.toString()));
-    }
-  }
-
-  Future<void> _onSkipDownload(
-    SkipDownload event,
     Emitter<OnboardingState> emit,
   ) async {
     try {

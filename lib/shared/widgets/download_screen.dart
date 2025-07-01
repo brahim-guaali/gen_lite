@@ -12,12 +12,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class DownloadScreen extends StatefulWidget {
   final VoidCallback onDownloadComplete;
-  final VoidCallback onSkip;
 
   const DownloadScreen({
     super.key,
     required this.onDownloadComplete,
-    required this.onSkip,
   });
 
   @override
@@ -36,8 +34,6 @@ class _DownloadScreenState extends State<DownloadScreen>
   bool _isDownloading = false;
   bool _hasError = false;
   String? _errorMessage;
-  bool _showSkipButton = false;
-  Timer? _skipTimer;
   DownloadState? _existingDownloadState;
 
   late AnimationController _pulseController;
@@ -69,7 +65,6 @@ class _DownloadScreenState extends State<DownloadScreen>
     ));
 
     _slideController.forward();
-    _startSkipTimer();
 
     _downloaderDataSource = GemmaDownloaderDataSource(
       model: DownloadModel(
@@ -85,18 +80,7 @@ class _DownloadScreenState extends State<DownloadScreen>
   void dispose() {
     _pulseController.dispose();
     _slideController.dispose();
-    _skipTimer?.cancel();
     super.dispose();
-  }
-
-  void _startSkipTimer() {
-    _skipTimer = Timer(const Duration(minutes: 1), () {
-      if (mounted) {
-        setState(() {
-          _showSkipButton = true;
-        });
-      }
-    });
   }
 
   Future<void> _initializeModel() async {
@@ -124,8 +108,19 @@ class _DownloadScreenState extends State<DownloadScreen>
               setState(() {
                 _downloadProgress = progress;
                 _progress = progress;
+              });
+            }
+          },
+          onDetailedProgress:
+              (receivedBytes, totalBytes, speedBytesPerSec, elapsed) {
+            if (mounted) {
+              setState(() {
+                _receivedBytes = receivedBytes;
+                _totalBytes = totalBytes;
+                _speed = speedBytesPerSec;
+                _elapsed = elapsed;
                 _status =
-                    'Downloading... ${(progress * 100).toStringAsFixed(1)}%';
+                    'Downloading... ${(receivedBytes / totalBytes * 100).toStringAsFixed(1)}%';
               });
             }
           },
@@ -198,23 +193,23 @@ class _DownloadScreenState extends State<DownloadScreen>
 
   String _formatBytes(int bytes) {
     if (bytes >= 1024 * 1024 * 1024) {
-      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
+      return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
     } else if (bytes >= 1024 * 1024) {
-      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(2)} MB';
     } else if (bytes >= 1024) {
-      return '${(bytes / 1024).toStringAsFixed(1)} KB';
+      return '${(bytes / 1024).toStringAsFixed(2)} KB';
     } else {
-      return '${bytes.toString().padLeft(3)} B';
+      return '$bytes B';
     }
   }
 
   String _formatSpeed(double bytesPerSec) {
     if (bytesPerSec >= 1024 * 1024) {
-      return '${(bytesPerSec / (1024 * 1024)).toStringAsFixed(1)} MB/s';
+      return '${(bytesPerSec / (1024 * 1024)).toStringAsFixed(2)} MB/s';
     } else if (bytesPerSec >= 1024) {
-      return '${(bytesPerSec / 1024).toStringAsFixed(1)} KB/s';
+      return '${(bytesPerSec / 1024).toStringAsFixed(2)} KB/s';
     } else {
-      return '${bytesPerSec.toStringAsFixed(0).padLeft(3)} B/s';
+      return '${bytesPerSec.toStringAsFixed(0)} B/s';
     }
   }
 
@@ -222,11 +217,14 @@ class _DownloadScreenState extends State<DownloadScreen>
     int h = d.inHours;
     int m = d.inMinutes % 60;
     int s = d.inSeconds % 60;
-    String result = '';
-    if (h > 0) result += '${h.toString().padLeft(2, '0')}h ';
-    if (m > 0 || h > 0) result += '${m.toString().padLeft(2, '0')}m ';
-    result += '${s.toString().padLeft(2, '0')}s';
-    return result.trim();
+
+    if (h > 0) {
+      return '${h}h ${m.toString().padLeft(2, '0')}m ${s.toString().padLeft(2, '0')}s';
+    } else if (m > 0) {
+      return '${m}m ${s.toString().padLeft(2, '0')}s';
+    } else {
+      return '${s}s';
+    }
   }
 
   @override
@@ -383,17 +381,57 @@ class _DownloadScreenState extends State<DownloadScreen>
               ),
               const SizedBox(height: AppConstants.paddingMedium),
 
-              // Status
-              if (_status != null)
-                Text(
-                  _status!,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.7),
-                      ),
+              // Detailed progress information
+              if (_isDownloading && _totalBytes > 0) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Downloaded: ${_formatBytes(_receivedBytes)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
+                          ),
+                    ),
+                    Text(
+                      'Total: ${_formatBytes(_totalBytes)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
+                          ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: AppConstants.paddingSmall),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Speed: ${_formatSpeed(_speed)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
+                          ),
+                    ),
+                    Text(
+                      'Time: ${_formatElapsed(_elapsed)}',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onSurface
+                                .withValues(alpha: 0.7),
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppConstants.paddingMedium),
+              ],
             ],
           ),
         ),
@@ -415,36 +453,6 @@ class _DownloadScreenState extends State<DownloadScreen>
             text: 'Clear and Restart',
             icon: Icons.clear,
             onPressed: _clearAndRestart,
-          ),
-          const SizedBox(height: AppConstants.paddingMedium),
-          DangerButton(
-            text: 'Skip for Now',
-            icon: Icons.skip_next,
-            onPressed: widget.onSkip,
-          ),
-        ],
-      );
-    }
-
-    if (_showSkipButton) {
-      return Column(
-        children: [
-          if (_isDownloading) ...[
-            Text(
-              'Download in progress...',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.7),
-                  ),
-            ),
-            const SizedBox(height: AppConstants.paddingMedium),
-          ],
-          SecondaryButton(
-            text: 'Skip for Now',
-            icon: Icons.skip_next,
-            onPressed: widget.onSkip,
           ),
         ],
       );

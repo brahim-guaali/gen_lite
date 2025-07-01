@@ -148,16 +148,6 @@ class _ChatScreenState extends State<ChatScreen> {
               return const SizedBox.shrink();
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.folder_open),
-            onPressed: () => Navigator.pushNamed(context, '/files'),
-            tooltip: 'File Management',
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.pushNamed(context, '/agents'),
-            tooltip: 'Settings',
-          ),
         ],
       ),
       body: Column(

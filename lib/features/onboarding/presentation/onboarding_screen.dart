@@ -288,7 +288,6 @@ class _DownloadScreen extends StatelessWidget {
     return DownloadScreen(
       onDownloadComplete: () =>
           context.read<OnboardingBloc>().add(CompleteDownload()),
-      onSkip: () => context.read<OnboardingBloc>().add(SkipDownload()),
     );
   }
 }
