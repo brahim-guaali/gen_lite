@@ -70,10 +70,10 @@ class _MessageBubbleState extends State<MessageBubble>
             isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!isUser) ...[
-            CircleAvatar(
+            const CircleAvatar(
               radius: 16,
               backgroundColor: AppConstants.primaryColor,
-              child: const Icon(
+              child: Icon(
                 Icons.smart_toy,
                 size: 16,
                 color: Colors.white,
@@ -231,10 +231,10 @@ class _MessageBubbleState extends State<MessageBubble>
           ),
           if (isUser) ...[
             const SizedBox(width: AppConstants.paddingSmall),
-            CircleAvatar(
+            const CircleAvatar(
               radius: 16,
               backgroundColor: AppConstants.secondaryColor,
-              child: const Icon(
+              child: Icon(
                 Icons.person,
                 size: 16,
                 color: Colors.white,

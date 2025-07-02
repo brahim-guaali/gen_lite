@@ -167,7 +167,7 @@ class _DownloadScreenState extends State<DownloadScreen>
   Future<void> _clearAndRestart() async {
     // Clear any existing download state
     final prefs = await SharedPreferences.getInstance();
-    final preferenceKey = 'model_downloaded_gemma-3n-E4B-it-int4.task';
+    const preferenceKey = 'model_downloaded_gemma-3n-E4B-it-int4.task';
     await prefs.remove(preferenceKey);
 
     // Delete the model file if it exists
@@ -323,7 +323,7 @@ class _DownloadScreenState extends State<DownloadScreen>
         backgroundColor: AppConstants.errorColor.withValues(alpha: 0.1),
         child: Column(
           children: [
-            Icon(
+            const Icon(
               Icons.error_outline,
               size: 48,
               color: AppConstants.errorColor,

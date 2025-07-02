@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../../shared/services/file_processing_service.dart';
 import '../../../shared/services/storage_service.dart';

@@ -151,7 +151,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       );
 
       print(
-          '[ChatBloc] LLM service response completed: ${aiResponse?.substring(0, aiResponse!.length > 100 ? 100 : aiResponse.length)}...');
+          '[ChatBloc] LLM service response completed: ${aiResponse?.substring(0, aiResponse.length > 100 ? 100 : aiResponse.length)}...');
 
       if (aiResponse == null) {
         throw Exception('Failed to get AI response');
@@ -266,7 +266,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     if (conversation != null) {
       emit(currentState.copyWith(currentConversation: conversation));
     } else {
-      emit(ChatError('Failed to load conversation: Bad state: No element'));
+      emit(const ChatError(
+          'Failed to load conversation: Bad state: No element'));
     }
   }
 

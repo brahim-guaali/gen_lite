@@ -97,7 +97,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   tooltip: 'Switch Agent',
                   onSelected: (agentId) {
                     if (agentId == 'none') {
-                      context.read<AgentBloc>().add(SetActiveAgent(''));
+                      context.read<AgentBloc>().add(const SetActiveAgent(''));
                     } else {
                       context.read<AgentBloc>().add(SetActiveAgent(agentId));
                     }
@@ -180,7 +180,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          AppIcon(
+                          const AppIcon(
                             icon: Icons.error_outline,
                             size: 64,
                             color: AppConstants.errorColor,
@@ -358,7 +358,8 @@ class _ChatScreenState extends State<ChatScreen> {
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Theme.of(context).colorScheme.surfaceVariant,
+                  fillColor:
+                      Theme.of(context).colorScheme.surfaceContainerHighest,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: AppConstants.paddingMedium,
                     vertical: AppConstants.paddingSmall,

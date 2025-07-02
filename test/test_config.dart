@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -11,6 +12,8 @@ import 'package:mockito/mockito.dart';
 /// Test configuration and utilities for GenLite tests
 class TestConfig {
   static bool _isInitialized = false;
+  static String? _testPath;
+  static final List<String> _openBoxes = [];
 
   /// Initialize test environment
   static Future<void> initialize() async {
@@ -19,25 +22,66 @@ class TestConfig {
     // Initialize Flutter binding
     TestWidgetsFlutterBinding.ensureInitialized();
 
-    // Set up mock path provider
-    PathProviderPlatform.instance = MockPathProvider();
+    // Create unique test path
+    _testPath = '/tmp/test_documents_${DateTime.now().millisecondsSinceEpoch}';
+
+    // Set up mock path provider with unique path
+    PathProviderPlatform.instance = MockPathProvider(_testPath!);
 
     // Initialize Hive for testing
-    await Hive.initFlutter();
+    await Hive.initFlutter(_testPath!);
 
     // Open test boxes
-    await Hive.openBox('settings');
-    await Hive.openBox('conversations');
-    await Hive.openBox('agents');
-    await Hive.openBox('files');
+    await _openBox('settings');
+    await _openBox('conversations');
+    await _openBox('agents');
+    await _openBox('files');
 
     _isInitialized = true;
   }
 
+  /// Open a Hive box with error handling
+  static Future<void> _openBox(String boxName) async {
+    try {
+      if (!Hive.isBoxOpen(boxName)) {
+        await Hive.openBox(boxName);
+        _openBoxes.add(boxName);
+      }
+    } catch (e) {
+      // If box is already open, that's fine
+      if (!_openBoxes.contains(boxName)) {
+        _openBoxes.add(boxName);
+      }
+    }
+  }
+
   /// Clean up test environment
   static Future<void> cleanup() async {
-    await Hive.close();
-    _isInitialized = false;
+    try {
+      // Close all open boxes
+      for (final boxName in _openBoxes) {
+        if (Hive.isBoxOpen(boxName)) {
+          await Hive.box(boxName).close();
+        }
+      }
+      _openBoxes.clear();
+
+      // Close Hive
+      await Hive.close();
+
+      // Clean up test directory
+      if (_testPath != null) {
+        final directory = Directory(_testPath!);
+        if (await directory.exists()) {
+          await directory.delete(recursive: true);
+        }
+      }
+    } catch (e) {
+      // Ignore cleanup errors
+    } finally {
+      _isInitialized = false;
+      _testPath = null;
+    }
   }
 
   /// Creates a test app with the given child widget
@@ -113,55 +157,59 @@ class TestConfig {
 class MockPathProvider extends Mock
     with MockPlatformInterfaceMixin
     implements PathProviderPlatform {
+  final String _testPath;
+
+  MockPathProvider(this._testPath);
+
   @override
   Future<String?> getApplicationDocumentsPath() async {
-    return '/tmp/test_documents';
+    return _testPath;
   }
 
   @override
   Future<String?> getApplicationSupportPath() async {
-    return '/tmp/test_support';
+    return '$_testPath/support';
   }
 
   @override
   Future<String?> getDownloadsPath() async {
-    return '/tmp/test_downloads';
+    return '$_testPath/downloads';
   }
 
   @override
   Future<String?> getExternalCachePath() async {
-    return '/tmp/test_external_cache';
+    return '$_testPath/external_cache';
   }
 
   @override
   Future<String?> getExternalStoragePath() async {
-    return '/tmp/test_external_storage';
+    return '$_testPath/external_storage';
   }
 
   @override
   Future<String?> getLibraryPath() async {
-    return '/tmp/test_library';
+    return '$_testPath/library';
   }
 
   @override
   Future<String?> getTemporaryPath() async {
-    return '/tmp/test_temp';
+    return '$_testPath/temp';
   }
 
   @override
   Future<String?> getApplicationCachePath() async {
-    return '/tmp/test_cache';
+    return '$_testPath/cache';
   }
 
   @override
   Future<List<String>?> getExternalCachePaths() async {
-    return ['/tmp/test_external_cache1', '/tmp/test_external_cache2'];
+    return ['$_testPath/external_cache1', '$_testPath/external_cache2'];
   }
 
   @override
   Future<List<String>?> getExternalStoragePaths(
       {StorageDirectory? type}) async {
-    return ['/tmp/test_external_storage1', '/tmp/test_external_storage2'];
+    return ['$_testPath/external_storage1', '$_testPath/external_storage2'];
   }
 }
 

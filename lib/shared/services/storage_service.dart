@@ -24,17 +24,17 @@ class StorageService {
   // Conversation Storage
   static Future<void> saveConversation(ChatLoaded conversation) async {
     final box = Hive.box(_conversationsBox);
-    final key = conversation.currentConversation?.id ??
+    final key = conversation.currentConversation.id ??
         DateTime.now().millisecondsSinceEpoch.toString();
     await box.put(key, {
       'id': key,
-      'title': conversation.currentConversation?.title ?? 'New Conversation',
-      'messages': conversation.currentConversation?.messages
+      'title': conversation.currentConversation.title ?? 'New Conversation',
+      'messages': conversation.currentConversation.messages
               .map((m) => m.toJson())
               .toList() ??
           [],
       'createdAt':
-          conversation.currentConversation?.createdAt.toIso8601String() ??
+          conversation.currentConversation.createdAt.toIso8601String() ??
               DateTime.now().toIso8601String(),
       'updatedAt': DateTime.now().toIso8601String(),
     });

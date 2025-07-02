@@ -280,7 +280,8 @@ class AppProgressBar extends StatelessWidget {
                 Container(
                   height: height ?? 8,
                   decoration: BoxDecoration(
-                    color: backgroundColor ?? colorScheme.surfaceVariant,
+                    color:
+                        backgroundColor ?? colorScheme.surfaceContainerHighest,
                     borderRadius:
                         BorderRadius.circular(AppConstants.borderRadiusSmall),
                   ),

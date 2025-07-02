@@ -38,7 +38,7 @@ class FileManagementScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    AppIcon(
+                    const AppIcon(
                       icon: Icons.error_outline,
                       size: 64,
                       color: AppConstants.errorColor,
@@ -100,7 +100,7 @@ class FileManagementScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            AppIcon(
+            const AppIcon(
               icon: Icons.folder_open,
               size: 64,
               color: AppConstants.primaryColor,

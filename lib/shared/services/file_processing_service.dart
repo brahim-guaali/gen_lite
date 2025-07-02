@@ -33,9 +33,9 @@ class FileProcessingService {
     try {
       // Mock PDF extraction - in real implementation, this would use a PDF library
       await Future.delayed(
-          Duration(milliseconds: 1000)); // Simulate processing time
-      return '[PDF Content - Mock extraction]\n\nThis is a simulated PDF text extraction. ' +
-          'In the real implementation, this would extract actual text content from the PDF file. ' +
+          const Duration(milliseconds: 1000)); // Simulate processing time
+      return '[PDF Content - Mock extraction]\n\nThis is a simulated PDF text extraction. '
+              'In the real implementation, this would extract actual text content from the PDF file. ' +
           'The file contains various sections and paragraphs that would be processed and returned here.';
     } catch (e) {
       throw Exception('Failed to extract text from PDF: ${e.toString()}');
@@ -47,9 +47,9 @@ class FileProcessingService {
     try {
       // Mock DOCX extraction - in real implementation, this would use a DOCX library
       await Future.delayed(
-          Duration(milliseconds: 800)); // Simulate processing time
-      return '[DOCX Content - Mock extraction]\n\nThis is a simulated DOCX text extraction. ' +
-          'In the real implementation, this would extract actual text content from the DOCX file. ' +
+          const Duration(milliseconds: 800)); // Simulate processing time
+      return '[DOCX Content - Mock extraction]\n\nThis is a simulated DOCX text extraction. '
+              'In the real implementation, this would extract actual text content from the DOCX file. ' +
           'The document contains formatted text, tables, and other elements that would be processed.';
     } catch (e) {
       throw Exception('Failed to extract text from DOCX: ${e.toString()}');
@@ -60,8 +60,9 @@ class FileProcessingService {
   static String formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 

@@ -104,14 +104,14 @@ class _TermsScreen extends StatelessWidget {
             color: AppConstants.primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.psychology,
             size: 60,
             color: AppConstants.primaryColor,
           ),
         ),
         const SizedBox(height: AppConstants.paddingLarge),
-        Text(
+        const Text(
           'Welcome to GenLite',
           style: TextStyle(
             fontSize: 28,
@@ -138,7 +138,7 @@ class _TermsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'About GenLite',
             style: TextStyle(
               fontSize: 22,
@@ -163,7 +163,7 @@ class _TermsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Key Features',
                   style: TextStyle(
                     fontSize: 18,
@@ -191,13 +191,13 @@ class _TermsScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
+                const Row(
                   children: [
                     Icon(
                       Icons.info_outline,
                       color: AppConstants.accentColor,
                     ),
-                    const SizedBox(width: AppConstants.paddingMedium),
+                    SizedBox(width: AppConstants.paddingMedium),
                     Expanded(
                       child: Text(
                         'Terms of Use',
@@ -211,7 +211,7 @@ class _TermsScreen extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: AppConstants.paddingMedium),
-                Text(
+                const Text(
                   'By using GenLite, you agree to the Gemma Terms of Use. This includes using the AI model responsibly and in compliance with applicable laws.',
                   style: TextStyle(fontSize: 14),
                 ),
@@ -248,7 +248,7 @@ class _TermsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14),
             ),
           ),
         ],
@@ -331,14 +331,14 @@ class _WelcomeScreen extends StatelessWidget {
             color: AppConstants.primaryColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(
+          child: const Icon(
             Icons.check_circle,
             size: 60,
             color: AppConstants.primaryColor,
           ),
         ),
         const SizedBox(height: AppConstants.paddingLarge),
-        Text(
+        const Text(
           'Setup Complete!',
           style: TextStyle(
             fontSize: 28,
@@ -365,7 +365,7 @@ class _WelcomeScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
+          const Text(
             'What\'s Next?',
             style: TextStyle(
               fontSize: 22,
@@ -387,7 +387,7 @@ class _WelcomeScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Getting Started',
                   style: TextStyle(
                     fontSize: 18,
@@ -408,7 +408,7 @@ class _WelcomeScreen extends StatelessWidget {
           // Tips
           AppCard(
             backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
-            child: Column(
+            child: const Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
@@ -417,7 +417,7 @@ class _WelcomeScreen extends StatelessWidget {
                       Icons.lightbulb_outline,
                       color: AppConstants.accentColor,
                     ),
-                    const SizedBox(width: AppConstants.paddingMedium),
+                    SizedBox(width: AppConstants.paddingMedium),
                     Expanded(
                       child: Text(
                         'Pro Tips',
@@ -430,7 +430,7 @@ class _WelcomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: AppConstants.paddingMedium),
+                SizedBox(height: AppConstants.paddingMedium),
                 Text(
                   '• Be specific in your questions for better responses\n'
                   '• Upload documents to get context-aware answers\n'
@@ -455,14 +455,14 @@ class _WelcomeScreen extends StatelessWidget {
           Container(
             width: 24,
             height: 24,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppConstants.primaryColor,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: Text(
                 number,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
@@ -474,7 +474,7 @@ class _WelcomeScreen extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: TextStyle(fontSize: 14),
+              style: const TextStyle(fontSize: 14),
             ),
           ),
         ],
@@ -522,13 +522,13 @@ class _ErrorScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.error_outline,
                 size: 80,
                 color: AppConstants.errorColor,
               ),
               const SizedBox(height: AppConstants.paddingLarge),
-              Text(
+              const Text(
                 'Setup Error',
                 style: TextStyle(
                   fontSize: 24,
@@ -561,7 +561,7 @@ class _ErrorScreen extends StatelessWidget {
 }
 
 class GemmaTermsDialog extends StatelessWidget {
-  const GemmaTermsDialog({Key? key}) : super(key: key);
+  const GemmaTermsDialog({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -577,7 +577,7 @@ class GemmaTermsDialog extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
+                  const Text(
                     'Gemma Terms of Use',
                     style: TextStyle(
                       fontSize: 20,
@@ -592,10 +592,10 @@ class GemmaTermsDialog extends StatelessWidget {
               ),
             ),
             const AppDivider(height: 1),
-            Expanded(
+            const Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: const GemmaTermsContent(),
+                padding: EdgeInsets.all(16.0),
+                child: GemmaTermsContent(),
               ),
             ),
           ],
@@ -606,14 +606,14 @@ class GemmaTermsDialog extends StatelessWidget {
 }
 
 class GemmaTermsContent extends StatelessWidget {
-  const GemmaTermsContent({Key? key}) : super(key: key);
+  const GemmaTermsContent({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
+        const Text(
           'License Agreement',
           style: TextStyle(
             fontSize: 20,
@@ -621,12 +621,12 @@ class GemmaTermsContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppConstants.paddingMedium),
-        Text(
+        const Text(
           'This software is licensed under the Gemma License Agreement. By using this software, you agree to be bound by the terms of this license.',
           style: TextStyle(fontSize: 14),
         ),
         const SizedBox(height: AppConstants.paddingLarge),
-        Text(
+        const Text(
           'Key Terms',
           style: TextStyle(
             fontSize: 18,
@@ -645,7 +645,7 @@ class GemmaTermsContent extends StatelessWidget {
         _buildTermItem('5. Limitation of Liability',
             'In no event shall the authors be liable for any damages arising from the use of the Software.'),
         const SizedBox(height: AppConstants.paddingLarge),
-        Text(
+        const Text(
           'Full License',
           style: TextStyle(
             fontSize: 18,
@@ -653,7 +653,7 @@ class GemmaTermsContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppConstants.paddingSmall),
-        Text(
+        const Text(
           'For the complete Gemma License Agreement, please visit: https://ai.google.dev/gemma/terms',
           style: TextStyle(
             fontSize: 14,
@@ -661,7 +661,7 @@ class GemmaTermsContent extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppConstants.paddingMedium),
-        Text(
+        const Text(
           'By accepting these terms, you acknowledge that you have read, understood, and agree to be bound by the Gemma License Agreement.',
           style: TextStyle(fontSize: 14),
         ),
@@ -677,7 +677,7 @@ class GemmaTermsContent extends StatelessWidget {
         children: [
           Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
@@ -685,7 +685,7 @@ class GemmaTermsContent extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             content,
-            style: TextStyle(fontSize: 14),
+            style: const TextStyle(fontSize: 14),
           ),
         ],
       ),

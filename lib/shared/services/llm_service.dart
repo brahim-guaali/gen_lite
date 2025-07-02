@@ -14,7 +14,6 @@ import 'package:flutter_gemma/flutter_gemma.dart'
         ModelType,
         PreferredBackend,
         Message;
-import 'package:flutter_gemma/pigeon.g.dart';
 import 'package:path_provider/path_provider.dart';
 
 class LLMService {
