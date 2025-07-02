@@ -6,6 +6,9 @@
 
 A privacy-focused, offline AI assistant that runs entirely on your device using the Gemma 2B language model. No data leaves your device - complete privacy guaranteed.
 
+![Untitled design](https://github.com/user-attachments/assets/f24e0fbe-454c-468d-acb7-c3fef15eb25e)
+
+
 ## 🎯 Key Features
 
 - **🔒 100% Privacy**: All AI processing happens locally on your device
