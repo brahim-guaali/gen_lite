@@ -1,49 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
 import '../../../shared/services/storage_service.dart';
-
-// Events
-abstract class OnboardingEvent extends Equatable {
-  const OnboardingEvent();
-
-  @override
-  List<Object?> get props => [];
-}
-
-class CheckOnboardingStatus extends OnboardingEvent {}
-
-class AcceptTerms extends OnboardingEvent {}
-
-class CompleteDownload extends OnboardingEvent {}
-
-// States
-abstract class OnboardingState extends Equatable {
-  const OnboardingState();
-
-  @override
-  List<Object?> get props => [];
-}
-
-class OnboardingInitial extends OnboardingState {}
-
-class OnboardingLoading extends OnboardingState {}
-
-class OnboardingTermsScreen extends OnboardingState {}
-
-class OnboardingDownloadScreen extends OnboardingState {}
-
-class OnboardingWelcomeScreen extends OnboardingState {}
-
-class OnboardingComplete extends OnboardingState {}
-
-class OnboardingError extends OnboardingState {
-  final String message;
-
-  const OnboardingError(this.message);
-
-  @override
-  List<Object?> get props => [message];
-}
+import 'onboarding_event.dart';
+import 'onboarding_state.dart';
 
 // BLoC
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {

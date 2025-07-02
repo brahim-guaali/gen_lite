@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
 import 'package:genlite/features/onboarding/bloc/onboarding_bloc.dart';
+import 'package:genlite/features/onboarding/bloc/onboarding_event.dart';
+import 'package:genlite/features/onboarding/bloc/onboarding_state.dart';
 import 'package:genlite/shared/services/storage_service.dart';
 import '../../../test_config.dart';
 
