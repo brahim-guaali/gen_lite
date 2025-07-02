@@ -29,6 +29,8 @@ https://github.com/user-attachments/assets/62d33866-872f-4295-9ae8-91752b4d980e
 - ~4GB free storage space
 - 4GB RAM recommended
 - Internet connection for initial model download
+- Flutter SDK (latest stable version)
+- Git
 
 ### Installation
 
@@ -43,14 +45,58 @@ https://github.com/user-attachments/assets/62d33866-872f-4295-9ae8-91752b4d980e
    flutter pub get
    ```
 
-3. **Set up Hugging Face token**
-   - Create a `.env` file in the project root
-   - Add your Hugging Face token: `HUGGING_FACE_TOKEN=your_token_here`
+3. **Set up Hugging Face Token**
+
+   **Step 1: Create a Hugging Face Account**
+   - Go to [Hugging Face](https://huggingface.co/)
+   - Sign up for a free account
+   - Verify your email address
+
+   **Step 2: Generate Access Token**
+   - Log in to your Hugging Face account
+   - Go to [Settings > Access Tokens](https://huggingface.co/settings/tokens)
+   - Click "New token"
+   - Give it a name (e.g., "GenLite App")
+   - Select "Read" permissions
+   - Click "Generate token"
+   - **Copy the token** (you won't see it again!)
+
+   **Step 3: Create .env File**
+   - In the project root directory, create a file named `.env`
+   - Add your Hugging Face token:
+   ```bash
+   HUGGING_FACE_TOKEN=your_token_here
+   ```
+   
+   **Example .env file:**
+   ```
+   HUGGING_FACE_TOKEN=hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   ```
+
+   **⚠️ Important Notes:**
+   - Never commit your `.env` file to version control
+   - The `.env` file is already in `.gitignore` for security
+   - Keep your token private and secure
+   - If you lose your token, you can generate a new one
 
 4. **Run the app**
    ```bash
    flutter run
    ```
+
+### Troubleshooting
+
+**If you get a 401 Unauthorized error:**
+- Verify your Hugging Face token is correct
+- Ensure the token has "Read" permissions
+- Check that the `.env` file is in the project root
+- Restart the app after adding the token
+
+**If the model download fails:**
+- Check your internet connection
+- Verify you have enough storage space (~4GB)
+- Try running `flutter clean` and `flutter pub get`
+- The download can be resumed if interrupted
 
 ### First Launch
 1. **Welcome Screen**: Learn about app features and privacy
