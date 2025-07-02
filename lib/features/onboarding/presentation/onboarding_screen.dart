@@ -4,6 +4,8 @@ import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/ui_components.dart';
 import '../../../shared/widgets/download_screen.dart';
 import '../bloc/onboarding_bloc.dart';
+import '../bloc/onboarding_event.dart';
+import '../bloc/onboarding_state.dart';
 
 class OnboardingScreen extends StatelessWidget {
   final VoidCallback onComplete;
