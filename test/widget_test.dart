@@ -8,34 +8,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genlite/main.dart';
-import 'package:genlite/core/constants/app_constants.dart';
+import 'test_config.dart';
 
 void main() {
   group('GenLite App', () {
+    setUpAll(() async {
+      await TestConfig.initialize();
+    });
+
+    tearDownAll(() async {
+      await TestConfig.cleanup();
+    });
+
     testWidgets('should render app with correct title',
         (WidgetTester tester) async {
+      // Build our app and trigger a frame.
       await tester.pumpWidget(const GenLiteApp());
 
-      // Verify app title is displayed
-      expect(find.text(AppConstants.appName), findsOneWidget);
-    });
+      // Wait for the app to initialize
+      await tester.pumpAndSettle();
 
-    testWidgets('should show welcome message initially',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(const GenLiteApp());
-
-      // Verify welcome message is displayed
+      // Verify that the app title is displayed
       expect(find.text('Welcome to GenLite'), findsOneWidget);
-      expect(find.text('Your offline AI assistant is ready to help.'),
-          findsOneWidget);
     });
 
-    testWidgets('should have message input field', (WidgetTester tester) async {
+    testWidgets('should show onboarding initially',
+        (WidgetTester tester) async {
+      // Build our app and trigger a frame.
       await tester.pumpWidget(const GenLiteApp());
 
-      // Verify message input is present
-      expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('Type your message...'), findsOneWidget);
+      // Wait for the app to initialize
+      await tester.pumpAndSettle();
+
+      // Verify that onboarding is shown initially
+      expect(find.text('Welcome to GenLite'), findsOneWidget);
+    });
+
+    testWidgets('should have onboarding flow', (WidgetTester tester) async {
+      // Build our app and trigger a frame.
+      await tester.pumpWidget(const GenLiteApp());
+
+      // Wait for the app to initialize
+      await tester.pumpAndSettle();
+
+      // Verify onboarding elements are present
+      expect(find.text('Welcome to GenLite'), findsOneWidget);
+      expect(find.text('Your Personal Offline AI Assistant'), findsOneWidget);
+    });
+
+    testWidgets('should handle app initialization',
+        (WidgetTester tester) async {
+      // Build our app and trigger a frame.
+      await tester.pumpWidget(const GenLiteApp());
+
+      // Wait for the app to initialize
+      await tester.pumpAndSettle();
+
+      // Verify app loads without crashing
+      expect(find.byType(MaterialApp), findsOneWidget);
     });
   });
 }

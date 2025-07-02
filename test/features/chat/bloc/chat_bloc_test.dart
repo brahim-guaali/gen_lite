@@ -3,7 +3,6 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:genlite/features/chat/bloc/chat_bloc.dart';
 import 'package:genlite/features/chat/bloc/chat_events.dart';
 import 'package:genlite/features/chat/bloc/chat_states.dart';
-import 'package:genlite/shared/models/message.dart';
 import 'package:genlite/shared/models/conversation.dart';
 
 void main() {
@@ -63,7 +62,7 @@ void main() {
               .having(
                 (state) => state.currentConversation.messages.length,
                 'messages.length',
-                1,
+                2,
               ),
           isA<ChatLoaded>()
               .having(

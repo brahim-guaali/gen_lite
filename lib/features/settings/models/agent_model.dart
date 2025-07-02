@@ -1,11 +1,12 @@
 import 'package:equatable/equatable.dart';
+import 'dart:math';
 
 class AgentModel extends Equatable {
   final String id;
   final String name;
   final String description;
   final String systemPrompt;
-  final Map<String, dynamic> parameters;
+  final Map<String, dynamic>? parameters;
   final DateTime createdAt;
   final DateTime updatedAt;
   final bool isActive;
@@ -16,7 +17,7 @@ class AgentModel extends Equatable {
     required this.name,
     required this.description,
     required this.systemPrompt,
-    this.parameters = const {},
+    this.parameters,
     required this.createdAt,
     required this.updatedAt,
     this.isActive = false,
@@ -41,7 +42,7 @@ class AgentModel extends Equatable {
       systemPrompt: systemPrompt ?? this.systemPrompt,
       parameters: parameters ?? this.parameters,
       createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      updatedAt: updatedAt ?? DateTime.now(),
       isActive: isActive ?? this.isActive,
       isTemplate: isTemplate ?? this.isTemplate,
     );
@@ -67,7 +68,10 @@ class AgentModel extends Equatable {
       name: json['name'] as String,
       description: json['description'] as String,
       systemPrompt: json['systemPrompt'] as String,
-      parameters: Map<String, dynamic>.from(json['parameters'] ?? {}),
+      parameters: json['parameters'] != null
+          ? Map<String, dynamic>.from(
+              json['parameters'] as Map<String, dynamic>)
+          : null,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
       isActive: json['isActive'] as bool? ?? false,
@@ -82,12 +86,14 @@ class AgentModel extends Equatable {
     Map<String, dynamic>? parameters,
   }) {
     final now = DateTime.now();
+    final random = Random();
+    final uniqueId = '${now.millisecondsSinceEpoch}_${random.nextInt(999999)}';
     return AgentModel(
-      id: now.millisecondsSinceEpoch.toString(),
+      id: uniqueId,
       name: name,
       description: description,
       systemPrompt: systemPrompt,
-      parameters: parameters ?? {},
+      parameters: parameters,
       createdAt: now,
       updatedAt: now,
     );
@@ -107,7 +113,7 @@ class AgentModel extends Equatable {
 - Algorithm optimization
 
 Always provide clear, well-documented code examples.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.3,
             'maxTokens': 2000,
           },
@@ -124,7 +130,7 @@ Always provide clear, well-documented code examples.''',
 - Business communication
 
 Provide constructive feedback and specific suggestions.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.7,
             'maxTokens': 1500,
           },
@@ -140,7 +146,7 @@ Provide constructive feedback and specific suggestions.''',
 - Report writing
 
 Focus on accuracy, thoroughness, and evidence-based conclusions.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.2,
             'maxTokens': 2500,
           },
@@ -156,7 +162,7 @@ Focus on accuracy, thoroughness, and evidence-based conclusions.''',
 - Translation assistance
 
 Adapt to the learner's level and provide gradual progression.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.5,
             'maxTokens': 1200,
           },
@@ -173,7 +179,7 @@ Adapt to the learner's level and provide gradual progression.''',
 - Code organization and structure
 
 Provide detailed architectural guidance with trade-offs and considerations.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.3,
             'maxTokens': 2500,
           },
@@ -191,7 +197,7 @@ Provide detailed architectural guidance with trade-offs and considerations.''',
 - Cloud platform best practices
 
 Provide practical, production-ready solutions.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.4,
             'maxTokens': 2000,
           },
@@ -209,7 +215,7 @@ Provide practical, production-ready solutions.''',
 - Metrics and analytics
 
 Focus on user-centric solutions and business value.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.6,
             'maxTokens': 1800,
           },
@@ -227,7 +233,7 @@ Focus on user-centric solutions and business value.''',
 - Big data technologies
 
 Provide insights backed by data and statistical rigor.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.3,
             'maxTokens': 2200,
           },
@@ -245,7 +251,7 @@ Provide insights backed by data and statistical rigor.''',
 - User journey mapping
 
 Focus on creating intuitive, accessible, and beautiful user experiences.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.7,
             'maxTokens': 1600,
           },
@@ -263,7 +269,7 @@ Focus on creating intuitive, accessible, and beautiful user experiences.''',
 - Security automation and DevSecOps
 
 Prioritize security best practices and risk mitigation.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.2,
             'maxTokens': 2000,
           },
@@ -281,7 +287,7 @@ Prioritize security best practices and risk mitigation.''',
 - Documentation strategy and organization
 
 Focus on clarity, accuracy, and user-friendly communication.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.5,
             'maxTokens': 1800,
           },
@@ -299,7 +305,7 @@ Focus on clarity, accuracy, and user-friendly communication.''',
 - Stakeholder communication
 
 Focus on team effectiveness and value delivery.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.6,
             'maxTokens': 1600,
           },
@@ -318,7 +324,7 @@ Focus on team effectiveness and value delivery.''',
 - Quality metrics and reporting
 
 Focus on comprehensive testing approaches and quality assurance.''',
-          parameters: {
+          parameters: const {
             'temperature': 0.4,
             'maxTokens': 1800,
           },

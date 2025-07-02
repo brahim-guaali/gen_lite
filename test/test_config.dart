@@ -3,9 +3,43 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:genlite/core/theme/app_theme.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
+import 'package:plugin_platform_interface/plugin_platform_interface.dart';
+import 'package:mockito/mockito.dart';
 
 /// Test configuration and utilities for GenLite tests
 class TestConfig {
+  static bool _isInitialized = false;
+
+  /// Initialize test environment
+  static Future<void> initialize() async {
+    if (_isInitialized) return;
+
+    // Initialize Flutter binding
+    TestWidgetsFlutterBinding.ensureInitialized();
+
+    // Set up mock path provider
+    PathProviderPlatform.instance = MockPathProvider();
+
+    // Initialize Hive for testing
+    await Hive.initFlutter();
+
+    // Open test boxes
+    await Hive.openBox('settings');
+    await Hive.openBox('conversations');
+    await Hive.openBox('agents');
+    await Hive.openBox('files');
+
+    _isInitialized = true;
+  }
+
+  /// Clean up test environment
+  static Future<void> cleanup() async {
+    await Hive.close();
+    _isInitialized = false;
+  }
+
   /// Creates a test app with the given child widget
   static Widget createTestApp(Widget child) {
     return MaterialApp(
@@ -68,6 +102,97 @@ class TestConfig {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
   }
+
+  /// Creates a mock LLM service for testing
+  static MockLLMService createMockLLMService() {
+    return MockLLMService();
+  }
+}
+
+/// Mock Path Provider for testing
+class MockPathProvider extends Mock
+    with MockPlatformInterfaceMixin
+    implements PathProviderPlatform {
+  @override
+  Future<String?> getApplicationDocumentsPath() async {
+    return '/tmp/test_documents';
+  }
+
+  @override
+  Future<String?> getApplicationSupportPath() async {
+    return '/tmp/test_support';
+  }
+
+  @override
+  Future<String?> getDownloadsPath() async {
+    return '/tmp/test_downloads';
+  }
+
+  @override
+  Future<String?> getExternalCachePath() async {
+    return '/tmp/test_external_cache';
+  }
+
+  @override
+  Future<String?> getExternalStoragePath() async {
+    return '/tmp/test_external_storage';
+  }
+
+  @override
+  Future<String?> getLibraryPath() async {
+    return '/tmp/test_library';
+  }
+
+  @override
+  Future<String?> getTemporaryPath() async {
+    return '/tmp/test_temp';
+  }
+
+  @override
+  Future<String?> getApplicationCachePath() async {
+    return '/tmp/test_cache';
+  }
+
+  @override
+  Future<List<String>?> getExternalCachePaths() async {
+    return ['/tmp/test_external_cache1', '/tmp/test_external_cache2'];
+  }
+
+  @override
+  Future<List<String>?> getExternalStoragePaths(
+      {StorageDirectory? type}) async {
+    return ['/tmp/test_external_storage1', '/tmp/test_external_storage2'];
+  }
+}
+
+/// Mock LLM Service for testing
+class MockLLMService {
+  bool _isReady = false;
+  String _lastResponse = '';
+
+  bool get isReady => _isReady;
+
+  Future<void> initialize() async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    _isReady = true;
+  }
+
+  Future<String> processMessage(String message,
+      {Function(String)? onToken}) async {
+    await Future.delayed(const Duration(milliseconds: 200));
+    _lastResponse = 'Mock response to: $message';
+
+    if (onToken != null) {
+      for (final token in _lastResponse.split(' ')) {
+        onToken(token);
+        await Future.delayed(const Duration(milliseconds: 50));
+      }
+    }
+
+    return _lastResponse;
+  }
+
+  String get lastResponse => _lastResponse;
 }
 
 /// Common test data for GenLite tests
