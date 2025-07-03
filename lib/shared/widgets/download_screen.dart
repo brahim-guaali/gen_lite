@@ -32,6 +32,7 @@ class _DownloadScreenState extends State<DownloadScreen>
   String? _status;
   bool _isResuming = false;
   bool _isDownloading = false;
+  bool _isInitializing = false;
   bool _hasError = false;
   String? _errorMessage;
   DownloadState? _existingDownloadState;
@@ -128,8 +129,11 @@ class _DownloadScreenState extends State<DownloadScreen>
       }
 
       setState(() {
+        _isDownloading = false;
+        _isInitializing = true;
         _status = 'Initializing model...';
         _downloadProgress = null;
+        _progress = 1.0; // Keep progress at 100%
       });
 
       final modelPath = await _downloaderDataSource.getFilePath();
@@ -139,6 +143,14 @@ class _DownloadScreenState extends State<DownloadScreen>
 
       // Initialize LLM service with the model path
       await LLMService().initialize(modelPath: modelPath);
+
+      setState(() {
+        _isInitializing = false;
+        _status = 'Setup complete!';
+      });
+
+      // Add a small delay to show the completion message
+      await Future.delayed(const Duration(seconds: 1));
 
       if (mounted) {
         widget.onDownloadComplete();
@@ -160,6 +172,7 @@ class _DownloadScreenState extends State<DownloadScreen>
       _errorMessage = null;
       _progress = 0.0;
       _downloadProgress = null;
+      _isInitializing = false;
     });
     await _initializeModel();
   }
@@ -185,6 +198,7 @@ class _DownloadScreenState extends State<DownloadScreen>
       _elapsed = Duration.zero;
       _status = null;
       _isResuming = false;
+      _isInitializing = false;
       _existingDownloadState = null;
       _downloadProgress = null;
     });
@@ -291,7 +305,11 @@ class _DownloadScreenState extends State<DownloadScreen>
         ),
         const SizedBox(height: AppConstants.paddingLarge),
         Text(
-          _hasError ? 'Download Failed' : 'Downloading AI Model',
+          _hasError
+              ? 'Download Failed'
+              : _isInitializing
+                  ? 'Initializing Model'
+                  : 'Downloading AI Model',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: _hasError
@@ -304,7 +322,9 @@ class _DownloadScreenState extends State<DownloadScreen>
         Text(
           _hasError
               ? 'There was an error downloading the model. You can retry or skip for now.'
-              : 'GenLite needs to download a large language model to enable AI features. This may take several minutes.',
+              : _isInitializing
+                  ? 'Setting up the AI model for first use. This may take a moment...'
+                  : 'GenLite needs to download a large language model to enable AI features. This may take several minutes.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: Theme.of(context)
                     .colorScheme
@@ -357,13 +377,17 @@ class _DownloadScreenState extends State<DownloadScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Download Progress',
+                    _isInitializing
+                        ? 'Initialization Progress'
+                        : 'Download Progress',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                         ),
                   ),
                   Text(
-                    '${(_progress * 100).toStringAsFixed(1)}%',
+                    _isInitializing
+                        ? '100%'
+                        : '${(_progress * 100).toStringAsFixed(1)}%',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppConstants.primaryColor,
