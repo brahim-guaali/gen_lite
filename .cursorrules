@@ -1,0 +1,169 @@
+# GenLite - Cursor Rules
+
+## Project Overview
+This is a Flutter app called GenLite - an offline AI assistant that uses the Gemma language model. The project follows Clean Architecture principles with BLoC pattern for state management.
+
+## Architecture & Structure
+
+### Directory Structure
+- `lib/core/` - App constants, themes, utilities
+- `lib/features/` - Feature modules (chat, files, settings, onboarding)
+- `lib/shared/` - Shared services and widgets
+- `test/` - Mirrors the lib structure for tests
+
+### BLoC Pattern
+- Separate events and states into individual files: `*_event.dart`, `*_state.dart`
+- Main bloc file imports from these separate files
+- Use `bloc_test` package for testing BLoCs
+- Always include proper error handling in event handlers
+
+### File Naming Conventions
+- Use snake_case for file names: `onboarding_bloc.dart`, `file_processing_service.dart`
+- Use PascalCase for class names: `OnboardingBloc`, `FileProcessingService`
+- Use camelCase for variables and methods: `onComplete`, `extractTextFromFile`
+
+## Code Style & Patterns
+
+### Imports
+- Group imports: Flutter/Dart packages first, then project imports
+- Use relative imports for project files
+- Import specific files rather than entire directories
+
+### Widget Structure
+- Use `const` constructors when possible
+- Prefer `StatelessWidget` over `StatefulWidget` unless state is needed
+- Use `AppCard`, `PrimaryButton`, `SecondaryButton` from shared widgets
+- Follow Material 3 design principles
+
+### Services
+- Use static methods for utility services
+- Include proper error handling with try-catch blocks
+- Return meaningful error messages
+- Use async/await for asynchronous operations
+
+### Testing
+- Create comprehensive test coverage
+- Use `TestConfig.initialize()` and `TestConfig.cleanup()` for test setup
+- Mock external dependencies (StorageService, PathProvider)
+- Test both success and error scenarios
+- Use descriptive test names that explain the expected behavior
+
+## Specific Patterns
+
+### Storage Service Usage
+```dart
+// Save settings
+await StorageService.saveSetting('key', value);
+
+// Get settings with default
+final value = await StorageService.getSetting<bool>('key') ?? false;
+```
+
+### BLoC Event Handling
+```dart
+Future<void> _onEventName(
+  EventName event,
+  Emitter<StateType> emit,
+) async {
+  try {
+    // Business logic
+    emit(NewState());
+  } catch (e) {
+    emit(ErrorState(e.toString()));
+  }
+}
+```
+
+### Widget Testing
+```dart
+testWidgets('should render correctly', (WidgetTester tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestApp(
+      const WidgetUnderTest(),
+    ),
+  );
+  
+  expect(find.byType(ExpectedWidget), findsOneWidget);
+});
+```
+
+### File Processing
+- Support TXT, PDF, DOCX files
+- Use mock implementations for PDF/DOCX in tests
+- Clean extracted text by removing excessive whitespace
+- Handle file size formatting with human-readable units
+
+### UI Components
+- Use `AppConstants` for consistent spacing, colors, and sizes
+- Implement loading states with `LoadingIndicator` and `LoadingOverlay`
+- Use `AppCard` for content containers
+- Follow the established color scheme and typography
+
+## Error Handling
+- Always wrap async operations in try-catch blocks
+- Provide meaningful error messages
+- Use proper error states in BLoCs
+- Handle network errors gracefully
+- Implement retry mechanisms where appropriate
+
+## Performance Considerations
+- Use `const` constructors for immutable widgets
+- Implement proper loading states
+- Handle large file uploads efficiently
+- Use appropriate data structures for performance
+
+## Privacy & Security
+- All processing happens locally on device
+- No data sent to external servers
+- Use secure storage for sensitive data
+- Implement proper token management for Hugging Face API
+
+## Documentation
+- Include comprehensive README with setup instructions
+- Document API usage and examples
+- Maintain clear commit messages
+- Use meaningful variable and method names
+
+## Dependencies
+- Use latest stable Flutter version
+- Prefer official Flutter packages
+- Keep dependencies up to date
+- Document any custom dependencies or workarounds
+
+## Git Workflow
+- Use descriptive commit messages
+- Include issue numbers in commits when relevant
+- Follow conventional commit format
+- Keep commits focused and atomic
+
+## Testing Strategy
+- Unit tests for business logic
+- Widget tests for UI components
+- Integration tests for user workflows
+- Mock external dependencies
+- Aim for high test coverage
+
+## Code Quality
+- Follow Flutter/Dart style guide
+- Use meaningful variable names
+- Keep methods focused and single-purpose
+- Add comments for complex logic
+- Use proper error handling throughout
+
+## When Adding New Features
+1. Follow the established directory structure
+2. Create separate event and state files for BLoCs
+3. Add comprehensive tests
+4. Update documentation if needed
+5. Follow the established naming conventions
+6. Use shared UI components when possible
+7. Implement proper error handling
+8. Consider privacy implications
+
+## Common Patterns to Follow
+- Use `TestConfig.createTestApp()` for widget tests
+- Mock `PathProvider` for file system operations
+- Use `StorageService` for persistent data
+- Implement loading states for async operations
+- Use `AppConstants` for consistent styling
+- Follow the established error handling patterns 
