@@ -299,7 +299,12 @@ flutter build appbundle --release
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License.
+
+## 📝 Related Articles
+
+- **[My Blog](https://medium.com/@brahimg)**: Follow my journey in AI and mobile development
+- **[Vibe Coding in Action: Building an AI App from Scratch](https://medium.com/@brahimg/vibe-coding-in-action-building-an-ai-app-from-scratch-using-cursor-and-gemma-dff44cb999c4)**: Learn how this app was built using Cursor and Gemma
 
 ## 🙏 Acknowledgments
 
