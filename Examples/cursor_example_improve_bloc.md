@@ -2,11 +2,11 @@
 
 **User**
 
-push
+what do thing about this pattern in bloc handlers
 
-what do thing about this pattern
 if (state is! ChatLoaded) return;
-in bloc handlers
+
+
 
 ---
 
@@ -89,7 +89,7 @@ if (state is ChatLoaded) {
 }
 ```
 
-## �� **When to use this pattern:**
+##  **When to use this pattern:**
 
 ✅ **Use when:**
 - You need to access specific state properties
@@ -162,7 +162,7 @@ if (state is ChatLoaded) {
 
 **User**
 
-there is some risks with this, how can we avoid this as it assums that the prevous state is ChatLoaded
+there is some risks with this, how can we avoid this as it assums that the previous state is ChatLoaded
 
 ---
 
@@ -170,7 +170,7 @@ there is some risks with this, how can we avoid this as it assums that the prevo
 
 Excellent point! You're absolutely right - there are significant risks with this pattern. The main issue is that it **assumes the previous state was `ChatLoaded`**, which can lead to bugs and unexpected behavior.
 
-## �� **Risks of the `if (state is! ChatLoaded) return;` pattern:**
+## **Risks of the `if (state is! ChatLoaded) return;` pattern:**
 
 ### 1. **State Race Conditions**
 ```dart
