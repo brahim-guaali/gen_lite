@@ -6,9 +6,6 @@
 
 A privacy-focused, offline AI assistant that runs entirely on your device using the Gemma 2B language model. No data leaves your device - complete privacy guaranteed.
 
-![Untitled design](https://github.com/user-attachments/assets/f24e0fbe-454c-468d-acb7-c3fef15eb25e)
-
-
 ## 🎯 Key Features
 
 - **🔒 100% Privacy**: All AI processing happens locally on your device
@@ -21,7 +18,7 @@ A privacy-focused, offline AI assistant that runs entirely on your device using 
 
 
 
-https://github.com/user-attachments/assets/62d33866-872f-4295-9ae8-91752b4d980e
+
 
 
 
@@ -39,8 +36,8 @@ https://github.com/user-attachments/assets/62d33866-872f-4295-9ae8-91752b4d980e
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/brahim-guaali/GenLite.git
-   cd GenLite
+   git clone https://github.com/brahim-guaali/gen_lite.git
+   cd gen_lite
    ```
 
 2. **Install dependencies**
@@ -313,9 +310,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/brahim-guaali/GenLite/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/brahim-guaali/GenLite/discussions)
-- **Documentation**: See [DEVELOPMENT.md](DEVELOPMENT.md) for technical details
+- **Issues**: [GitHub Issues](https://github.com/brahim-guaali/gen_lite/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/brahim-guaali/gen_lite/discussions)
+- **Documentation**: See [DEVELOPMENT.md](./Docs/DEVELOPMENT.md) for technical details
 
 ---
 
