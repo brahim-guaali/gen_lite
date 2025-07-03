@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_gemma/core/chat.dart';
-import 'package:genlite/shared/models/conversation.dart';
 import 'package:genlite/shared/models/message.dart';
 import 'package:genlite/shared/services/llm_service.dart';
+import 'package:genlite/shared/services/chat_service.dart';
 import '../../settings/models/agent_model.dart';
 import 'chat_events.dart';
 import 'chat_states.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final LLMService _llmService = LLMService();
+  final ChatService _chatService = ChatService();
   InferenceChat? _currentChat;
-  AgentModel? _activeAgent;
 
   ChatBloc() : super(ChatInitial()) {
     on<CreateNewConversation>(_onCreateNewConversation);
@@ -21,31 +21,34 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ArchiveConversation>(_onArchiveConversation);
     on<DeleteConversation>(_onDeleteConversation);
     on<UpdateStreamingMessage>(_onUpdateStreamingMessage);
+
+    // Initialize the service
+    _chatService.initialize();
   }
 
   // Method to set the active agent from outside the bloc
   void setActiveAgent(AgentModel? agent) {
-    _activeAgent = agent;
+    _chatService.setActiveAgent(agent);
     print('[ChatBloc] Active agent set to: ${agent?.name ?? 'None'}');
   }
 
   void _onCreateNewConversation(
     CreateNewConversation event,
     Emitter<ChatState> emit,
-  ) {
-    final newConversation = Conversation.create(title: event.title);
+  ) async {
+    try {
+      final newConversation = await _chatService.createConversation(
+        title: event.title,
+      );
 
-    if (state is ChatInitial) {
+      final currentData = _chatService.getCurrentData();
+
       emit(ChatLoaded(
         currentConversation: newConversation,
-        conversations: [newConversation],
+        conversations: currentData.conversations,
       ));
-    } else if (state is ChatLoaded) {
-      final currentState = state as ChatLoaded;
-      emit(ChatLoaded(
-        currentConversation: newConversation,
-        conversations: [...currentState.conversations, newConversation],
-      ));
+    } catch (e) {
+      emit(ChatError('Failed to create conversation: $e'));
     }
   }
 
@@ -53,57 +56,34 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     SendMessage event,
     Emitter<ChatState> emit,
   ) async {
-    if (state is! ChatLoaded) return;
-
-    print('[ChatBloc] Starting to process message: "${event.content}"');
-
-    final currentState = state as ChatLoaded;
-    final userMessage = Message.create(
-      content: event.content,
-      role: MessageRole.user,
-      conversationId: currentState.currentConversation.id,
-    );
-
-    // Add user message to conversation
-    final updatedConversation = currentState.currentConversation.copyWith(
-      messages: [...currentState.currentConversation.messages, userMessage],
-    );
-
-    // Update conversations list
-    final updatedConversations = currentState.conversations.map((conv) {
-      if (conv.id == updatedConversation.id) {
-        return updatedConversation;
-      }
-      return conv;
-    }).toList();
-
-    // Create initial AI message for streaming
-    final initialAiMessage = Message.create(
-      content: '',
-      role: MessageRole.assistant,
-      conversationId: updatedConversation.id,
-    );
-
-    final conversationWithAiMessage = updatedConversation.copyWith(
-      messages: [...updatedConversation.messages, initialAiMessage],
-    );
-
-    final conversationsWithAiMessage = updatedConversations.map((conv) {
-      if (conv.id == conversationWithAiMessage.id) {
-        return conversationWithAiMessage;
-      }
-      return conv;
-    }).toList();
-
-    // Emit processing state with empty AI message
-    print('[ChatBloc] Emitting processing state with streaming message...');
-    emit(currentState.copyWith(
-      currentConversation: conversationWithAiMessage,
-      conversations: conversationsWithAiMessage,
-      isProcessing: true,
-    ));
-
     try {
+      // Get current data from service
+      final currentData = _chatService.getCurrentData();
+
+      if (currentData.currentConversation == null) {
+        emit(ChatError('No active conversation'));
+        return;
+      }
+
+      print('[ChatBloc] Starting to process message: "${event.content}"');
+
+      // Add user message and empty AI message to conversation via service
+      final updatedConversation = await _chatService.sendMessage(
+        content: event.content,
+        conversationId: currentData.currentConversation!.id,
+      );
+
+      // Get updated data from service
+      final updatedData = _chatService.getCurrentData();
+
+      // Emit processing state with empty AI message
+      print('[ChatBloc] Emitting processing state with streaming message...');
+      emit(ChatLoaded(
+        currentConversation: updatedConversation,
+        conversations: updatedData.conversations,
+        isProcessing: true,
+      ));
+
       print('[ChatBloc] Checking if LLM service is ready...');
       // Ensure LLM service is ready
       if (!_llmService.isReady) {
@@ -126,16 +106,17 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         print('[ChatBloc] Using existing chat session');
       }
 
-      // Log active agent status
-      print('[ChatBloc] Active agent: ${_activeAgent?.name ?? 'None'}');
+      // Get active agent from service
+      final activeAgent = _chatService.activeAgent;
+      print('[ChatBloc] Active agent: ${activeAgent?.name ?? 'None'}');
 
       // Prepare the message with agent context if available
       String messageToSend = event.content;
-      if (_activeAgent != null && _activeAgent!.systemPrompt.isNotEmpty) {
+      if (activeAgent != null && activeAgent.systemPrompt.isNotEmpty) {
         // Prepend the agent's system prompt to provide context
-        messageToSend = '${_activeAgent!.systemPrompt}\n\nUser: $event.content';
+        messageToSend = '${activeAgent.systemPrompt}\n\nUser: $event.content';
         print(
-            '[ChatBloc] Using agent "${_activeAgent!.name}" with system prompt');
+            '[ChatBloc] Using agent "${activeAgent.name}" with system prompt');
       }
 
       // Process message with AI using streaming
@@ -153,189 +134,175 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       print(
           '[ChatBloc] LLM service response completed: ${aiResponse?.substring(0, aiResponse.length > 100 ? 100 : aiResponse.length)}...');
 
-      if (aiResponse == null) {
+      if (aiResponse == null || aiResponse.isEmpty) {
         throw Exception('Failed to get AI response');
       }
 
-      // Final state update (no longer processing)
-      final finalConversation = conversationWithAiMessage.copyWith(
-        messages: conversationWithAiMessage.messages.map((msg) {
-          if (msg.role == MessageRole.assistant && msg.content.isEmpty) {
-            return msg.copyWith(content: aiResponse);
-          }
-          return msg;
-        }).toList(),
+      // Add AI response to conversation via service
+      final finalConversation = await _chatService.addAIResponse(
+        conversationId: updatedConversation.id,
+        response: aiResponse,
       );
 
-      final finalConversations = conversationsWithAiMessage.map((conv) {
-        if (conv.id == finalConversation.id) {
-          return finalConversation;
-        }
-        return conv;
-      }).toList();
+      // Get final data from service
+      final finalData = _chatService.getCurrentData();
 
       print('[ChatBloc] Emitting final state with completed AI response...');
-      emit(currentState.copyWith(
+      emit(ChatLoaded(
         currentConversation: finalConversation,
-        conversations: finalConversations,
+        conversations: finalData.conversations,
         isProcessing: false,
       ));
     } catch (e) {
       print('[ChatBloc] Error processing message: $e');
 
-      // Add error message
-      final errorMessage = Message.create(
-        content:
-            'Sorry, I encountered an error while processing your message. Please try again.',
-        role: MessageRole.assistant,
-        conversationId: updatedConversation.id,
-      );
+      // Get current data for error handling
+      final currentData = _chatService.getCurrentData();
 
-      final finalConversation = updatedConversation.copyWith(
-        messages: [...updatedConversation.messages, errorMessage],
-      );
+      if (currentData.currentConversation != null) {
+        // Add error message via service
+        final errorMessage = Message.create(
+          content:
+              'Sorry, I encountered an error while processing your message. Please try again.',
+          role: MessageRole.assistant,
+          conversationId: currentData.currentConversation!.id,
+        );
 
-      final finalConversations = updatedConversations.map((conv) {
-        if (conv.id == finalConversation.id) {
-          return finalConversation;
-        }
-        return conv;
-      }).toList();
+        final finalConversation = currentData.currentConversation!.copyWith(
+          messages: [
+            ...currentData.currentConversation!.messages,
+            errorMessage
+          ],
+        );
 
-      print('[ChatBloc] Emitting error state...');
-      emit(currentState.copyWith(
-        currentConversation: finalConversation,
-        conversations: finalConversations,
-        isProcessing: false,
-      ));
+        print('[ChatBloc] Emitting error state...');
+        emit(ChatLoaded(
+          currentConversation: finalConversation,
+          conversations: currentData.conversations,
+          isProcessing: false,
+        ));
+      } else {
+        emit(ChatError('Failed to process message: $e'));
+      }
     }
   }
 
   void _onUpdateStreamingMessage(
     UpdateStreamingMessage event,
     Emitter<ChatState> emit,
-  ) {
-    if (state is! ChatLoaded) return;
+  ) async {
+    try {
+      // Get current data from service
+      final currentData = _chatService.getCurrentData();
 
-    final currentState = state as ChatLoaded;
-    final messages = currentState.currentConversation.messages;
-
-    if (messages.isEmpty) return;
-
-    // Find the last assistant message (which should be the streaming one)
-    final lastMessage = messages.last;
-    if (lastMessage.role != MessageRole.assistant) return;
-
-    // Update the last message with the new token
-    final updatedMessage = lastMessage.copyWith(
-      content: lastMessage.content + event.token,
-    );
-
-    final updatedMessages = [...messages];
-    updatedMessages[updatedMessages.length - 1] = updatedMessage;
-
-    final updatedConversation = currentState.currentConversation.copyWith(
-      messages: updatedMessages,
-    );
-
-    final updatedConversations = currentState.conversations.map((conv) {
-      if (conv.id == updatedConversation.id) {
-        return updatedConversation;
+      if (currentData.currentConversation == null) {
+        return;
       }
-      return conv;
-    }).toList();
 
-    emit(currentState.copyWith(
-      currentConversation: updatedConversation,
-      conversations: updatedConversations,
-      isProcessing: true, // Keep processing until complete
-    ));
+      // Update streaming message via service
+      final updatedConversation = await _chatService.updateStreamingMessage(
+        conversationId: currentData.currentConversation!.id,
+        token: event.token,
+      );
+
+      // Get updated data from service
+      final updatedData = _chatService.getCurrentData();
+
+      emit(ChatLoaded(
+        currentConversation: updatedConversation,
+        conversations: updatedData.conversations,
+        isProcessing: true, // Keep processing until complete
+      ));
+    } catch (e) {
+      print('[ChatBloc] Error updating streaming message: $e');
+    }
   }
 
   void _onLoadConversation(
     LoadConversation event,
     Emitter<ChatState> emit,
-  ) {
-    if (state is! ChatLoaded) return;
+  ) async {
+    try {
+      final conversation =
+          await _chatService.loadConversation(event.conversationId);
 
-    final currentState = state as ChatLoaded;
-    final conversation = currentState.conversations
-        .where((conv) => conv.id == event.conversationId)
-        .firstOrNull;
-
-    if (conversation != null) {
-      emit(currentState.copyWith(currentConversation: conversation));
-    } else {
-      emit(const ChatError(
-          'Failed to load conversation: Bad state: No element'));
+      if (conversation != null) {
+        final currentData = _chatService.getCurrentData();
+        emit(ChatLoaded(
+          currentConversation: conversation,
+          conversations: currentData.conversations,
+        ));
+      } else {
+        emit(const ChatError(
+            'Failed to load conversation: Conversation not found'));
+      }
+    } catch (e) {
+      emit(ChatError('Failed to load conversation: $e'));
     }
   }
 
   void _onUpdateConversationTitle(
     UpdateConversationTitle event,
     Emitter<ChatState> emit,
-  ) {
-    if (state is! ChatLoaded) return;
+  ) async {
+    try {
+      final updatedConversation = await _chatService.updateConversationTitle(
+        conversationId: event.conversationId,
+        newTitle: event.newTitle,
+      );
 
-    final currentState = state as ChatLoaded;
-    final updatedConversations = currentState.conversations.map((conv) {
-      if (conv.id == event.conversationId) {
-        return conv.copyWith(title: event.newTitle);
-      }
-      return conv;
-    }).toList();
+      final currentData = _chatService.getCurrentData();
 
-    final updatedCurrentConversation =
-        currentState.currentConversation.id == event.conversationId
-            ? currentState.currentConversation.copyWith(title: event.newTitle)
-            : currentState.currentConversation;
-
-    emit(currentState.copyWith(
-      currentConversation: updatedCurrentConversation,
-      conversations: updatedConversations,
-    ));
+      emit(ChatLoaded(
+        currentConversation: updatedConversation,
+        conversations: currentData.conversations,
+      ));
+    } catch (e) {
+      emit(ChatError('Failed to update conversation title: $e'));
+    }
   }
 
   void _onArchiveConversation(
     ArchiveConversation event,
     Emitter<ChatState> emit,
-  ) {
-    if (state is! ChatLoaded) return;
+  ) async {
+    try {
+      await _chatService.archiveConversation(event.conversationId);
 
-    final currentState = state as ChatLoaded;
-    final updatedConversations = currentState.conversations.map((conv) {
-      if (conv.id == event.conversationId) {
-        return conv.copyWith(isArchived: true);
+      final currentData = _chatService.getCurrentData();
+
+      if (currentData.currentConversation != null) {
+        emit(ChatLoaded(
+          currentConversation: currentData.currentConversation!,
+          conversations: currentData.conversations,
+        ));
+      } else {
+        emit(ChatInitial());
       }
-      return conv;
-    }).toList();
-
-    emit(currentState.copyWith(conversations: updatedConversations));
+    } catch (e) {
+      emit(ChatError('Failed to archive conversation: $e'));
+    }
   }
 
   void _onDeleteConversation(
     DeleteConversation event,
     Emitter<ChatState> emit,
-  ) {
-    if (state is! ChatLoaded) return;
+  ) async {
+    try {
+      await _chatService.deleteConversation(event.conversationId);
 
-    final currentState = state as ChatLoaded;
-    final updatedConversations = currentState.conversations
-        .where((conv) => conv.id != event.conversationId)
-        .toList();
+      final currentData = _chatService.getCurrentData();
 
-    if (updatedConversations.isEmpty) {
-      emit(ChatInitial());
-    } else {
-      final newCurrentConversation =
-          currentState.currentConversation.id == event.conversationId
-              ? updatedConversations.first
-              : currentState.currentConversation;
-
-      emit(currentState.copyWith(
-        currentConversation: newCurrentConversation,
-        conversations: updatedConversations,
-      ));
+      if (currentData.currentConversation != null) {
+        emit(ChatLoaded(
+          currentConversation: currentData.currentConversation!,
+          conversations: currentData.conversations,
+        ));
+      } else {
+        emit(ChatInitial());
+      }
+    } catch (e) {
+      emit(ChatError('Failed to delete conversation: $e'));
     }
   }
 
