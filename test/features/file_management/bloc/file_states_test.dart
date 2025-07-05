@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-
-import '../../../../lib/features/file_management/bloc/file_states.dart';
-import '../../../../lib/features/file_management/models/file_model.dart';
+import 'package:genlite/features/file_management/bloc/file_states.dart';
+import 'package:genlite/features/file_management/models/file_model.dart';
 
 void main() {
   group('FileState', () {

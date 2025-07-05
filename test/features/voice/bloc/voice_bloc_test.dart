@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bloc_test/bloc_test.dart';
-
 import 'package:genlite/features/voice/bloc/voice_bloc.dart';
 import 'package:genlite/features/voice/bloc/voice_event.dart';
 import 'package:genlite/features/voice/bloc/voice_state.dart';
-
+import 'package:genlite/shared/services/speech_service.dart';
+import 'package:genlite/shared/services/tts_service.dart';
 import '../../../test_config.dart';
 
 void main() {

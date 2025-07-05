@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:genlite/core/constants/app_constants.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:genlite/shared/services/enhanced_model_downloader.dart';
-import 'package:genlite/shared/services/llm_service.dart';
 import 'package:genlite/shared/services/gemma_downloader.dart';
-import 'package:genlite/shared/widgets/loading_indicator.dart';
+import 'package:genlite/shared/services/model_downloader.dart';
+import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/services/llm_service.dart';
 import 'package:genlite/shared/widgets/ui_components.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:genlite/shared/utils/logger.dart';
+import 'package:path_provider/path_provider.dart';
 
 class DownloadScreen extends StatefulWidget {
   final VoidCallback onDownloadComplete;
@@ -38,14 +39,11 @@ class _DownloadScreenState extends State<DownloadScreen>
   bool _isInitializing = false;
   bool _hasError = false;
   String? _errorMessage;
-  DownloadState? _existingDownloadState;
+  bool? _showAllErrorLines = false;
 
   late AnimationController _pulseController;
   late AnimationController _slideController;
   late Animation<double> _slideAnimation;
-
-  late final GemmaDownloaderDataSource _downloaderDataSource;
-  double? _downloadProgress;
 
   @override
   void initState() {
@@ -69,14 +67,6 @@ class _DownloadScreenState extends State<DownloadScreen>
     ));
 
     _slideController.forward();
-
-    _downloaderDataSource = GemmaDownloaderDataSource(
-      model: DownloadModel(
-        modelUrl:
-            'https://huggingface.co/google/gemma-3n-E4B-it-litert-preview/resolve/main/gemma-3n-E4B-it-int4.task',
-        modelFilename: 'gemma-3n-E4B-it-int4.task',
-      ),
-    );
     _initializeModel();
   }
 
@@ -88,73 +78,40 @@ class _DownloadScreenState extends State<DownloadScreen>
   }
 
   Future<void> _initializeModel() async {
+    setState(() {
+      _isDownloading = true;
+      _status = 'Downloading Gemma 3N...';
+      _hasError = false;
+      _errorMessage = null;
+    });
     try {
-      final gemma = FlutterGemmaPlugin.instance;
-      final isModelInstalled =
-          await _downloaderDataSource.checkModelExistence();
-
-      if (!isModelInstalled) {
-        setState(() {
-          _isDownloading = true;
-          _status = 'Downloading Gemma 3N...';
-        });
-
-        final token = dotenv.env['HUGGINGFACE_TOKEN'] ?? '';
-        if (token.isEmpty) {
-          throw Exception(
-              'Hugging Face token not found. Please check your .env file.');
-        }
-
-        await _downloaderDataSource.downloadModel(
-          token: token,
-          onProgress: (progress) {
-            if (mounted) {
-              setState(() {
-                _downloadProgress = progress;
-                _progress = progress;
-              });
-            }
-          },
-          onDetailedProgress:
-              (receivedBytes, totalBytes, speedBytesPerSec, elapsed) {
-            if (mounted) {
-              setState(() {
-                _receivedBytes = receivedBytes;
-                _totalBytes = totalBytes;
-                _speed = speedBytesPerSec;
-                _elapsed = elapsed;
-                _status =
-                    'Downloading... ${(receivedBytes / totalBytes * 100).toStringAsFixed(1)}%';
-              });
-            }
-          },
-        );
-      }
-
+      final modelPath = await EnhancedModelDownloader.ensureGemmaModel(
+        onProgress: (info) {
+          if (mounted) {
+            setState(() {
+              _progress = info.progress;
+              _receivedBytes = info.receivedBytes;
+              _totalBytes = info.totalBytes;
+              _speed = info.speedBytesPerSec;
+              _elapsed = info.elapsed;
+              _isResuming = info.isResuming;
+              _status = info.status;
+            });
+          }
+        },
+      );
       setState(() {
         _isDownloading = false;
         _isInitializing = true;
         _status = 'Initializing model...';
-        _downloadProgress = null;
-        _progress = 1.0; // Keep progress at 100%
+        _progress = 1.0;
       });
-
-      final modelPath = await _downloaderDataSource.getFilePath();
-      final file = File(modelPath);
-      Logger.debug('[DownloadScreen]', 'File exists: ${await file.exists()}');
-      Logger.debug('[DownloadScreen]', 'File size: ${await file.length()}');
-
-      // Initialize LLM service with the model path
       await LLMService().initialize(modelPath: modelPath);
-
       setState(() {
         _isInitializing = false;
         _status = 'Setup complete!';
       });
-
-      // Add a small delay to show the completion message
       await Future.delayed(const Duration(seconds: 1));
-
       if (mounted) {
         widget.onDownloadComplete();
       }
@@ -174,25 +131,21 @@ class _DownloadScreenState extends State<DownloadScreen>
       _hasError = false;
       _errorMessage = null;
       _progress = 0.0;
-      _downloadProgress = null;
       _isInitializing = false;
     });
     await _initializeModel();
   }
 
   Future<void> _clearAndRestart() async {
-    // Clear any existing download state
-    final prefs = await SharedPreferences.getInstance();
-    const preferenceKey = 'model_downloaded_gemma-3n-E4B-it-int4.task';
-    await prefs.remove(preferenceKey);
-
-    // Delete the model file if it exists
-    final modelPath = await _downloaderDataSource.getFilePath();
-    final file = File(modelPath);
+    // Delete the model file and download state using EnhancedModelDownloader logic
+    final docDir = await getApplicationDocumentsDirectory();
+    final modelDir = Directory('${docDir.path}/gemma2b');
+    final filePath = '${modelDir.path}/gemma-3n-E4B-it-int4.task';
+    final file = File(filePath);
     if (await file.exists()) {
       await file.delete();
     }
-
+    // Optionally clear download state if you have a method for it
     setState(() {
       _progress = 0.0;
       _receivedBytes = 0;
@@ -202,8 +155,8 @@ class _DownloadScreenState extends State<DownloadScreen>
       _status = null;
       _isResuming = false;
       _isInitializing = false;
-      _existingDownloadState = null;
-      _downloadProgress = null;
+      _hasError = false;
+      _errorMessage = null;
     });
     await _initializeModel();
   }
@@ -339,6 +292,12 @@ class _DownloadScreenState extends State<DownloadScreen>
 
   Widget _buildProgressSection() {
     if (_hasError) {
+      final errorLines =
+          (_errorMessage ?? 'Unknown error occurred').split('\n');
+      bool showAll = _showAllErrorLines ?? false;
+      int maxLines = 6;
+      List<String> linesToShow =
+          showAll ? errorLines : errorLines.take(maxLines).toList();
       return AppCard(
         backgroundColor: AppConstants.errorColorWithOpacity(0.1),
         child: Column(
@@ -357,10 +316,29 @@ class _DownloadScreenState extends State<DownloadScreen>
                   ),
             ),
             const SizedBox(height: AppConstants.paddingSmall),
-            Text(
-              _errorMessage ?? 'Unknown error occurred',
-              style: Theme.of(context).textTheme.bodyMedium,
-              textAlign: TextAlign.center,
+            Container(
+              constraints: const BoxConstraints(maxHeight: 180),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ...linesToShow.map((line) => Text(
+                          line,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          textAlign: TextAlign.left,
+                        )),
+                    if (errorLines.length > maxLines)
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _showAllErrorLines = !showAll;
+                          });
+                        },
+                        child: Text(showAll ? 'Show Less' : 'Show More'),
+                      ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

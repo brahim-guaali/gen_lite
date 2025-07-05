@@ -6,9 +6,7 @@ import 'package:genlite/features/chat/bloc/chat_states.dart';
 import 'package:genlite/shared/models/message.dart';
 import 'package:genlite/shared/widgets/loading_indicator.dart';
 import 'package:genlite/core/constants/app_constants.dart';
-import 'package:genlite/features/settings/bloc/agent_bloc.dart';
-import 'package:genlite/features/settings/bloc/agent_events.dart';
-import 'package:genlite/features/settings/bloc/agent_states.dart';
+
 import 'package:genlite/features/voice/bloc/voice_bloc.dart';
 import 'package:genlite/features/voice/bloc/voice_event.dart';
 import 'package:genlite/features/voice/bloc/voice_state.dart';

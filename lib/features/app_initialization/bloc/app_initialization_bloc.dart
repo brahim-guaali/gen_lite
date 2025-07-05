@@ -1,7 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:genlite/shared/services/storage_service.dart';
 import 'package:genlite/shared/services/llm_service.dart';
-import 'package:genlite/shared/utils/logger.dart';
 import 'package:genlite/features/app_initialization/bloc/app_initialization_event.dart';
 import 'package:genlite/features/app_initialization/bloc/app_initialization_state.dart';
 

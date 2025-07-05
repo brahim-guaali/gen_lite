@@ -2,13 +2,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:genlite/features/main_navigation/main_navigation_screen.dart';
-import 'package:genlite/features/settings/bloc/agent_bloc.dart';
-import 'package:genlite/features/settings/bloc/agent_states.dart';
+import 'package:genlite/features/app_initialization/bloc/app_initialization_bloc.dart';
 import 'package:genlite/features/chat/bloc/chat_bloc.dart';
-import 'package:genlite/features/chat/bloc/chat_states.dart';
 import 'package:genlite/features/voice/bloc/voice_bloc.dart';
-import 'package:genlite/features/voice/bloc/voice_state.dart';
 import 'package:genlite/features/file_management/bloc/file_bloc.dart';
+import 'package:genlite/features/settings/bloc/agent_bloc.dart';
 import '../../test_config.dart';
 
 void main() {

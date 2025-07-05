@@ -5,8 +5,10 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/services/gemma_downloader.dart';
+import 'package:genlite/shared/services/model_downloader.dart';
 import 'package:genlite/shared/utils/logger.dart';
+import 'dart:typed_data';
 
 class DownloadState {
   final String modelId;
@@ -75,6 +77,24 @@ class EnhancedModelDownloader {
       'https://huggingface.co/google/gemma-3n-E4B-it-litert-preview/resolve/main/gemma-3n-E4B-it-int4.task';
   static const String _modelFilename = 'gemma-3n-E4B-it-int4.task';
 
+  static Future<bool> _isValidZipFile(File file) async {
+    if (!await file.exists()) return false;
+    final raf = await file.open();
+    try {
+      final header = await raf.read(4);
+      // ZIP files start with 0x50 0x4B 0x03 0x04
+      return header.length == 4 &&
+          header[0] == 0x50 &&
+          header[1] == 0x4B &&
+          header[2] == 0x03 &&
+          header[3] == 0x04;
+    } catch (_) {
+      return false;
+    } finally {
+      await raf.close();
+    }
+  }
+
   static Future<String> ensureGemmaModel({
     String modelId = 'google/gemma-3n-E4B-it-litert-preview',
     String filename = 'gemma-3n-E4B-it-int4.task',
@@ -86,31 +106,66 @@ class EnhancedModelDownloader {
     final modelDir = Directory('${docDir.path}/gemma2b');
     if (!await modelDir.exists()) {
       await modelDir.create(recursive: true);
+      Logger.info('EnhancedModelDownloader',
+          'Created model directory: \'${modelDir.path}\'');
     }
-
     final filePath = '${modelDir.path}/$filename';
     final file = File(filePath);
+    final downloadState = await _getDownloadState(modelId, filename);
 
-    // Check if file already exists and is complete
+    Logger.info('EnhancedModelDownloader',
+        'File exists: ${await file.exists()}, Download state exists: ${downloadState != null}');
+
+    // If file is missing but state exists, clear state and start fresh
+    if (!(await file.exists()) && downloadState != null) {
+      Logger.info('EnhancedModelDownloader',
+          'File missing but download state exists. Clearing state and starting fresh.');
+      await clearDownloadState(modelId, filename);
+    }
+    // If file exists, check if it's valid and complete
     if (await file.exists()) {
       final fileSize = await file.length();
-      final downloadState = await _getDownloadState(modelId, filename);
-
-      if (downloadState != null &&
-          downloadState.isCompleted &&
-          fileSize == downloadState.totalBytes) {
-        onProgress?.call(ProgressInfo(
-          progress: 1.0,
-          receivedBytes: fileSize,
-          totalBytes: fileSize,
-          speedBytesPerSec: 0,
-          elapsed: Duration.zero,
-          status: 'Model already downloaded',
-        ));
-        return filePath;
+      if (fileSize == 0) {
+        Logger.info('EnhancedModelDownloader',
+            'File is zero bytes, deleting and clearing state.');
+        await file.delete();
+        await clearDownloadState(modelId, filename);
+      } else if (downloadState != null && !downloadState.isCompleted) {
+        // For partial downloads, always attempt to resume if file size is > 0 and <= totalBytes
+        if (fileSize > 0 && fileSize <= downloadState.totalBytes) {
+          Logger.info('EnhancedModelDownloader',
+              'Partial file and state found. Will attempt to resume from $fileSize bytes.');
+          // Do not delete, allow resume
+        } else {
+          Logger.info('EnhancedModelDownloader',
+              'File size does not match state, deleting and clearing state.');
+          await file.delete();
+          await clearDownloadState(modelId, filename);
+        }
+      } else if (downloadState != null && downloadState.isCompleted) {
+        // For completed downloads, you may want a stricter check (e.g., signature)
+        // For now, just accept the file as valid if size matches
+        if (fileSize == downloadState.totalBytes) {
+          onProgress?.call(ProgressInfo(
+            progress: 1.0,
+            receivedBytes: fileSize,
+            totalBytes: fileSize,
+            speedBytesPerSec: 0,
+            elapsed: Duration.zero,
+            status: 'Model already downloaded',
+          ));
+          Logger.info(
+              'EnhancedModelDownloader', 'Completed file found and accepted.');
+          return filePath;
+        } else {
+          Logger.info('EnhancedModelDownloader',
+              'Completed state but file size does not match, deleting and clearing state.');
+          await file.delete();
+          await clearDownloadState(modelId, filename);
+        }
       }
     }
-
+    // Always download if we reach here (file missing or just deleted)
     return _downloadModel(
       modelId: modelId,
       filename: filename,
@@ -133,47 +188,74 @@ class EnhancedModelDownloader {
     if (token == null || token.isEmpty) {
       throw Exception('Hugging Face token not found in .env');
     }
-
-    final url =
-        Uri.parse('https://huggingface.co/$modelId/resolve/main/$filename');
     final file = File(filePath);
+    final modelDir = file.parent;
+    if (!await modelDir.exists()) {
+      await modelDir.create(recursive: true);
+      Logger.info('EnhancedModelDownloader',
+          'Created model directory in download: \'${modelDir.path}\'');
+    }
 
     // Check for existing download state
     DownloadState? existingState;
     int resumeFrom = 0;
+    int fileSize = 0;
+    bool fileExists = await file.exists();
+    if (fileExists) {
+      fileSize = await file.length();
+    }
+    existingState = await _getDownloadState(modelId, filename);
+    Logger.info('EnhancedModelDownloader', '--- Download Start ---');
+    Logger.info('EnhancedModelDownloader',
+        'File exists: $fileExists, File size: $fileSize');
+    Logger.info('EnhancedModelDownloader',
+        'Download state: ${existingState != null ? existingState.toJson() : 'null'}');
 
-    if (allowResume) {
-      existingState = await _getDownloadState(modelId, filename);
-      if (existingState != null &&
-          !existingState.isCompleted &&
-          existingState.error == null &&
-          await file.exists()) {
-        final fileSize = await file.length();
-        if (fileSize <= existingState.totalBytes && fileSize > 0) {
-          resumeFrom = fileSize;
-          onProgress?.call(ProgressInfo(
-            progress: fileSize / existingState.totalBytes,
-            receivedBytes: fileSize,
-            totalBytes: existingState.totalBytes,
-            speedBytesPerSec: 0,
-            elapsed: Duration.zero,
-            isResuming: true,
-            status: 'Resuming download from ${_formatBytes(fileSize)}',
-          ));
-        }
+    if (allowResume &&
+        fileExists &&
+        existingState != null &&
+        !existingState.isCompleted &&
+        existingState.error == null) {
+      // Only resume if file size matches state
+      if (fileSize <= existingState.totalBytes && fileSize > 0) {
+        resumeFrom = fileSize;
+        Logger.info('EnhancedModelDownloader',
+            'Resuming download from $resumeFrom bytes (of ${existingState.totalBytes})');
+      } else {
+        Logger.info('EnhancedModelDownloader',
+            'File size does not match state, clearing state and starting over.');
+        await EnhancedModelDownloader.clearDownloadState(modelId, filename);
+        resumeFrom = 0;
       }
+    } else if (fileExists &&
+        (existingState == null || existingState.isCompleted)) {
+      Logger.info('EnhancedModelDownloader',
+          'File exists but no valid resume state, starting fresh download.');
+      resumeFrom = 0;
+    } else {
+      Logger.info('EnhancedModelDownloader',
+          'No file or state, starting fresh download.');
+      resumeFrom = 0;
     }
 
     int attempt = 0;
     while (attempt < maxRetries) {
       try {
-        final request = http.Request('GET', url);
+        final request = http.Request(
+            'GET',
+            Uri.parse(
+                'https://huggingface.co/$modelId/resolve/main/$filename'));
         request.headers['Authorization'] = 'Bearer $token';
 
         if (resumeFrom > 0) {
           request.headers['Range'] = 'bytes=$resumeFrom-';
         }
 
+        Logger.info(
+            'EnhancedModelDownloader',
+            resumeFrom > 0
+                ? 'Sending HTTP request with Range header: bytes=$resumeFrom-'
+                : 'Starting fresh download');
         final response = await request.send();
 
         if (response.statusCode != 200 && response.statusCode != 206) {
@@ -228,6 +310,12 @@ class EnhancedModelDownloader {
             lastMillis = millis;
           }
 
+          // Log every MB chunk
+          if (received % (1024 * 1024) < chunk.length) {
+            Logger.info('EnhancedModelDownloader',
+                'Downloaded ${_formatBytes(received)} of ${_formatBytes(totalBytes)}');
+          }
+
           // Update progress
           onProgress?.call(ProgressInfo(
             progress: received / totalBytes,
@@ -266,6 +354,9 @@ class EnhancedModelDownloader {
         );
         await _saveDownloadState(modelId, filename, completedState);
 
+        Logger.info('EnhancedModelDownloader',
+            'Download completed: $filePath (${_formatBytes(received)})');
+
         onProgress?.call(ProgressInfo(
           progress: 1.0,
           receivedBytes: received,
@@ -278,8 +369,7 @@ class EnhancedModelDownloader {
         return filePath;
       } catch (e) {
         Logger.warning(LogTags.enhancedModelDownloader,
-            'Download attempt ${attempt + 1} failed: $e');
-
+            'Download attempt \\${attempt + 1} failed: $e');
         // Save error state
         final errorState = DownloadState(
           modelId: modelId,
@@ -294,10 +384,14 @@ class EnhancedModelDownloader {
 
         attempt++;
         if (attempt >= maxRetries) {
+          Logger.error('EnhancedModelDownloader',
+              'Download failed after $maxRetries attempts.');
           rethrow;
         }
 
         // Wait before retry
+        Logger.info('EnhancedModelDownloader',
+            'Waiting before retry (attempt $attempt)...');
         await Future.delayed(Duration(seconds: 2 * attempt));
       }
     }

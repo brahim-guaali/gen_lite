@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../core/constants/app_constants.dart';
-import '../../../shared/widgets/ui_components.dart';
-
-import '../bloc/onboarding_bloc.dart';
-import '../bloc/onboarding_event.dart';
-import '../bloc/onboarding_state.dart';
-import '../widgets/onboarding_terms_screen.dart' as terms_widget;
-import '../widgets/onboarding_welcome_screen.dart';
-import '../widgets/onboarding_error_screen.dart';
+import 'package:genlite/features/onboarding/bloc/onboarding_bloc.dart';
+import 'package:genlite/features/onboarding/bloc/onboarding_event.dart';
+import 'package:genlite/features/onboarding/bloc/onboarding_state.dart';
+import 'package:genlite/features/onboarding/widgets/onboarding_terms_screen.dart'
+    as terms_widget;
+import 'package:genlite/features/onboarding/widgets/onboarding_welcome_screen.dart';
+import 'package:genlite/features/onboarding/widgets/onboarding_error_screen.dart';
+import 'package:genlite/shared/widgets/loading_indicator.dart';
+import 'package:genlite/shared/widgets/ui_components.dart';
 
 class OnboardingScreen extends StatelessWidget {
   final VoidCallback onComplete;

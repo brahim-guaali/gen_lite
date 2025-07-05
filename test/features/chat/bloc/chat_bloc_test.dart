@@ -1,8 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:bloc_test/bloc_test.dart';
 import 'package:genlite/features/chat/bloc/chat_bloc.dart';
 import 'package:genlite/features/chat/bloc/chat_events.dart';
 import 'package:genlite/features/chat/bloc/chat_states.dart';
+import 'package:genlite/shared/models/message.dart';
+import 'package:genlite/shared/models/conversation.dart';
+import 'package:genlite/features/settings/models/agent_model.dart';
+import 'package:genlite/shared/services/chat_service.dart';
+import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/services/llm_service.dart';
+import 'package:genlite/shared/services/tts_service.dart';
 import '../../../test_config.dart';
 
 void main() {

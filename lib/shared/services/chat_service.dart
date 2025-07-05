@@ -1,11 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
-import 'package:genlite/shared/models/conversation.dart';
 import 'package:genlite/shared/models/message.dart';
+import 'package:genlite/shared/models/conversation.dart';
 import 'package:genlite/features/settings/models/agent_model.dart';
-import 'package:genlite/features/chat/bloc/chat_states.dart';
 import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/services/llm_service.dart';
+import 'package:genlite/shared/services/tts_service.dart';
 import 'package:genlite/shared/utils/logger.dart';
 import 'package:hive/hive.dart';
 

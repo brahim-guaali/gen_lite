@@ -1,11 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
-import 'dart:io';
-
-import '../../../../lib/features/file_management/bloc/file_bloc.dart';
-import '../../../../lib/features/file_management/bloc/file_events.dart';
-import '../../../../lib/features/file_management/bloc/file_states.dart';
-import '../../../../lib/features/file_management/models/file_model.dart';
+import 'package:mockito/mockito.dart';
+import 'package:genlite/features/file_management/bloc/file_bloc.dart';
+import 'package:genlite/features/file_management/bloc/file_events.dart';
+import 'package:genlite/features/file_management/bloc/file_states.dart';
+import 'package:genlite/features/file_management/models/file_model.dart';
+import 'package:genlite/shared/services/file_processing_service.dart';
+import 'package:genlite/shared/services/storage_service.dart';
 import '../../../test_config.dart';
 
 void main() {
