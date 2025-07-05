@@ -27,12 +27,22 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isComposing = false;
+  bool _hasAutoCreated = false;
 
   @override
   void initState() {
     super.initState();
-    // The ChatBloc now automatically loads existing conversations
-    // No need to create a new conversation here
+    // Automatically create a new conversation if none exists
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final chatBloc = context.read<ChatBloc>();
+      final state = chatBloc.state;
+      if (state is ChatInitial && !_hasAutoCreated) {
+        chatBloc.add(const CreateNewConversation(title: 'New Conversation'));
+        setState(() {
+          _hasAutoCreated = true;
+        });
+      }
+    });
   }
 
   @override
@@ -249,7 +259,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 // Auto-speak AI responses when voice output is enabled
                 if (lastMessage.role == MessageRole.assistant &&
                     voiceState is VoiceReady &&
-                    voiceState.voiceOutputEnabled) {
+                    voiceState.voiceOutputEnabled &&
+                    !chatState.isProcessing) {
                   context.read<VoiceBloc>().add(SpeakText(lastMessage.content));
                 }
               }
@@ -268,58 +279,8 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
                 builder: (context, state) {
                   if (state is ChatInitial) {
-                    return Center(
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.all(AppConstants.paddingLarge),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            AppIcon(
-                              icon: Icons.chat_bubble_outline,
-                              size: 80,
-                              color: AppConstants.primaryColor.withOpacity(0.5),
-                            ),
-                            AppSpacing.lg,
-                            Text(
-                              'Welcome to GenLite',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppConstants.primaryColor,
-                                  ),
-                            ),
-                            AppSpacing.md,
-                            Text(
-                              'Your offline AI assistant is ready to help.\nStart your first conversation.',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.7),
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                            AppSpacing.xl,
-                            PrimaryButton(
-                              text: 'Start New Conversation',
-                              icon: Icons.add,
-                              onPressed: () {
-                                context.read<ChatBloc>().add(
-                                      const CreateNewConversation(
-                                          title: 'New Conversation'),
-                                    );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+                    // Show a loading indicator while the conversation is being created
+                    return const Center(child: LoadingIndicator());
                   }
 
                   if (state is ChatLoading) {
@@ -367,16 +328,7 @@ class _ChatScreenState extends State<ChatScreen> {
                               textAlign: TextAlign.center,
                             ),
                             AppSpacing.lg,
-                            PrimaryButton(
-                              text: 'Start New Conversation',
-                              icon: Icons.add,
-                              onPressed: () {
-                                context.read<ChatBloc>().add(
-                                      const CreateNewConversation(
-                                          title: 'New Conversation'),
-                                    );
-                              },
-                            ),
+                            // Remove the button, just show error
                           ],
                         ),
                       ),
@@ -387,6 +339,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     final messages = state.currentConversation.messages;
 
                     if (messages.isEmpty) {
+                      // Show a welcome message, but no button
                       return _buildWelcomeMessage();
                     }
 
@@ -446,7 +399,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
             AppSpacing.md,
             Text(
-              'Your offline AI assistant is ready to help.\nStart a conversation below.',
+              'Your offline AI assistant is ready to help. Start chatting below.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context)
                         .colorScheme
@@ -456,32 +409,10 @@ class _ChatScreenState extends State<ChatScreen> {
               textAlign: TextAlign.center,
             ),
             AppSpacing.xl,
-            _buildQuickStartButtons(),
+            // No button here
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildQuickStartButtons() {
-    final quickPrompts = [
-      'Help me write a professional email',
-      'Explain a complex topic simply',
-      'Brainstorm ideas for a project',
-      'Help me learn something new',
-    ];
-
-    return Column(
-      children: quickPrompts.map((prompt) {
-        return Padding(
-          padding: const EdgeInsets.only(bottom: AppConstants.paddingSmall),
-          child: SecondaryButton(
-            text: prompt,
-            onPressed: () => _handleSubmitted(prompt),
-            isFullWidth: true,
-          ),
-        );
-      }).toList(),
     );
   }
 
