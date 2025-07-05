@@ -17,6 +17,7 @@ A privacy-focused, offline AI assistant that runs entirely on your device using 
 - **🤖 Custom Agents**: Create and switch between different AI personalities
 - **⬇️ Smart Downloads**: Resume interrupted model downloads automatically
 - **🎨 Professional UX**: Unified design system with smooth interactions
+- **✨ Seamless Splash Experience**: Native splash screens with consistent branding and smooth initialization
 
 https://github.com/user-attachments/assets/62d33866-872f-4295-9ae8-91752b4d980e
 
@@ -97,10 +98,20 @@ https://github.com/user-attachments/assets/62d33866-872f-4295-9ae8-91752b4d980e
 - The download can be resumed if interrupted
 
 ### First Launch
-1. **Welcome Screen**: Learn about app features and privacy
-2. **Terms Acceptance**: Accept Gemma license terms
-3. **Model Download**: Download the ~4GB AI model (can be resumed if interrupted)
-4. **Start Chatting**: Begin using the AI assistant
+1. **Splash Screen**: Beautiful native splash with app branding
+2. **Initialization**: Seamless transition to Flutter initialization screen
+3. **Welcome Screen**: Learn about app features and privacy
+4. **Terms Acceptance**: Accept Gemma license terms
+5. **Model Download**: Download the ~4GB AI model (can be resumed if interrupted)
+6. **Start Chatting**: Begin using the AI assistant
+
+### Splash Screen Experience
+- **Native Splash**: Immediate display of app branding on launch
+- **Consistent Design**: Primary color (#6366F1) background across platforms
+- **iOS**: Centered "GenLite" text in white
+- **Android**: Clean primary color background
+- **Smooth Transition**: Seamless flow from native splash to Flutter initialization
+- **Loading Feedback**: Clear indication during app initialization
 
 ## 🏗 Architecture Overview
 

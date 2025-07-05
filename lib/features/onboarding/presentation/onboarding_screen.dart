@@ -20,29 +20,36 @@ class OnboardingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    print('[OnboardingScreen] Building OnboardingScreen');
     return BlocProvider(
       create: (context) => OnboardingBloc()..add(CheckOnboardingStatus()),
       child: BlocListener<OnboardingBloc, OnboardingState>(
         listener: (context, state) {
           if (state is OnboardingComplete) {
+            print('[OnboardingScreen] OnboardingComplete - calling onComplete');
             onComplete();
           }
         },
         child: BlocBuilder<OnboardingBloc, OnboardingState>(
           builder: (context, state) {
-            if (state is OnboardingLoading) {
+            print('[OnboardingScreen] State: [35m${state.runtimeType}[0m');
+            if (state is OnboardingInitial || state is OnboardingLoading) {
+              print('[OnboardingScreen] Showing loading spinner');
               return const Scaffold(
+                backgroundColor: Color(0xFF6366F1), //
                 body: Center(
-                  child: CircularProgressIndicator(),
+                  child: Text(''),
                 ),
               );
             }
 
             if (state is OnboardingTermsScreen) {
+              print('[OnboardingScreen] Showing OnboardingTermsScreen');
               return terms_widget.OnboardingTermsScreen(onComplete: onComplete);
             }
 
             if (state is OnboardingError) {
+              print('[OnboardingScreen] Showing OnboardingErrorScreen');
               return OnboardingErrorScreen(
                 message: state.message,
                 onRetry: () =>
@@ -50,6 +57,7 @@ class OnboardingScreen extends StatelessWidget {
               );
             }
 
+            print('[OnboardingScreen] Unknown state - showing fallback');
             return const Scaffold(
               body: Center(
                 child: Text('Unknown state'),

@@ -507,7 +507,86 @@ class MainScreen extends StatefulWidget {
 - Add About screen if not present
 - Update widget and integration tests for new navigation
 
-### 4.6 Voice UI Components
+### 4.6 Splash Screen and Initialization UI
+**Location**: Native splash screens and `lib/main.dart`
+
+**Native Splash Screens**:
+- **Android**: `android/app/src/main/res/drawable/launch_background.xml`
+- **iOS**: `ios/Runner/Base.lproj/LaunchScreen.storyboard`
+
+**Design**:
+- **Background Color**: Primary color (#6366F1) matching app theme
+- **iOS**: Centered "GenLite" text in white (32pt system font)
+- **Android**: Clean primary color background (no text overlay)
+
+**Implementation**:
+```xml
+<!-- Android colors.xml -->
+<resources>
+    <color name="splash_primary">#6366F1</color>
+</resources>
+
+<!-- iOS LaunchScreen.storyboard -->
+<label text="GenLite" textAlignment="center">
+    <fontDescription type="system" pointSize="32"/>
+    <color key="textColor" white="1" alpha="1"/>
+</label>
+```
+
+**Flutter Initialization Screen**:
+**Location**: `lib/main.dart` - `_buildHomeScreen()`
+
+**Features**:
+- Matches native splash design for seamless transition
+- Primary color background (#6366F1)
+- Centered "GenLite" text in white (36pt)
+- Loading spinner below app name
+- Shows during model initialization check
+
+**Implementation**:
+```dart
+Widget _buildHomeScreen() {
+  if (_isCheckingModel) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF6366F1),
+      body: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'GenLite',
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            SizedBox(height: 24),
+            CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  // ... rest of the method
+}
+```
+
+**User Experience Flow**:
+1. **Native Splash**: Shows immediately on app launch
+2. **Flutter Initialization**: Seamlessly transitions from native splash
+3. **Model Check**: Verifies if AI model is ready
+4. **App Ready**: Transitions to main app interface
+
+**Benefits**:
+- **Consistent Branding**: Same color and styling across all screens
+- **Seamless Transition**: No visual jarring between splash and initialization
+- **Professional Appearance**: Clean, modern design
+- **Loading Feedback**: Clear indication that app is initializing
+
+### 4.7 Voice UI Components
 **Location**: `lib/shared/widgets/voice_components.dart`
 
 **Voice Input Button**:
