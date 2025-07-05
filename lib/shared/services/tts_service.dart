@@ -64,12 +64,24 @@ class TTSService {
         await stop();
       }
 
+      // Remove emojis before speaking
+      final cleanText = TTSService.removeEmojis(text);
+
       _isSpeaking = true;
-      await _flutterTts.speak(text);
+      await _flutterTts.speak(cleanText);
     } catch (e) {
       print('Failed to speak text: $e');
       _isSpeaking = false;
     }
+  }
+
+  /// Remove emojis from text
+  static String removeEmojis(String text) {
+    // Emoji regex pattern (covers most common emojis)
+    final emojiRegex = RegExp(
+        r'[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]',
+        unicode: true);
+    return text.replaceAll(emojiRegex, '');
   }
 
   /// Stop current speech
