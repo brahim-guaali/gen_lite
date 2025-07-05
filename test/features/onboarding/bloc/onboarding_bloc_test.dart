@@ -32,7 +32,7 @@ void main() {
 
     group('CheckOnboardingStatus', () {
       blocTest<OnboardingBloc, OnboardingState>(
-        'should emit OnboardingLoading then OnboardingTermsScreen when terms not accepted',
+        'should emit OnboardingLoading then OnboardingTermsScreen when onboarding not completed',
         build: () => onboardingBloc,
         act: (bloc) => bloc.add(CheckOnboardingStatus()),
         expect: () => [
@@ -42,57 +42,42 @@ void main() {
       );
 
       blocTest<OnboardingBloc, OnboardingState>(
-        'should emit OnboardingLoading then OnboardingDownloadScreen when terms accepted but download not completed',
+        'should emit OnboardingLoading then OnboardingComplete when onboarding completed',
         build: () => onboardingBloc,
         seed: () => OnboardingInitial(),
         act: (bloc) async {
-          await StorageService.saveSetting('hasAcceptedTerms', true);
+          await StorageService.saveSetting('hasCompletedOnboarding', true);
           bloc.add(CheckOnboardingStatus());
         },
         expect: () => [
           isA<OnboardingLoading>(),
-          isA<OnboardingDownloadScreen>(),
-        ],
-      );
-
-      blocTest<OnboardingBloc, OnboardingState>(
-        'should emit OnboardingLoading then OnboardingWelcomeScreen when both terms and download completed',
-        build: () => onboardingBloc,
-        seed: () => OnboardingInitial(),
-        act: (bloc) async {
-          await StorageService.saveSetting('hasAcceptedTerms', true);
-          await StorageService.saveSetting('hasCompletedDownload', true);
-          bloc.add(CheckOnboardingStatus());
-        },
-        expect: () => [
-          isA<OnboardingLoading>(),
-          isA<OnboardingWelcomeScreen>(),
+          isA<OnboardingComplete>(),
         ],
       );
     });
 
     group('AcceptTerms', () {
       blocTest<OnboardingBloc, OnboardingState>(
-        'should emit OnboardingDownloadScreen when terms are accepted',
+        'should emit OnboardingComplete when terms are accepted',
         build: () => onboardingBloc,
         seed: () => OnboardingTermsScreen(),
         act: (bloc) => bloc.add(AcceptTerms()),
         expect: () => [
-          isA<OnboardingDownloadScreen>(),
+          isA<OnboardingComplete>(),
         ],
         wait: const Duration(milliseconds: 100),
       );
 
-      test('should save terms acceptance to storage', () async {
+      test('should save onboarding completion to storage', () async {
         final bloc = OnboardingBloc();
         bloc.emit(OnboardingTermsScreen());
 
         bloc.add(AcceptTerms());
         await Future.delayed(const Duration(milliseconds: 200));
 
-        final hasAcceptedTerms =
-            await StorageService.getSetting<bool>('hasAcceptedTerms');
-        expect(hasAcceptedTerms, isTrue);
+        final hasCompletedOnboarding =
+            await StorageService.getSetting<bool>('hasCompletedOnboarding');
+        expect(hasCompletedOnboarding, isTrue);
 
         bloc.close();
       });
@@ -100,26 +85,26 @@ void main() {
 
     group('CompleteDownload', () {
       blocTest<OnboardingBloc, OnboardingState>(
-        'should emit OnboardingWelcomeScreen when download is completed',
+        'should emit OnboardingComplete when download is completed',
         build: () => onboardingBloc,
-        seed: () => OnboardingDownloadScreen(),
+        seed: () => OnboardingTermsScreen(),
         act: (bloc) => bloc.add(CompleteDownload()),
         expect: () => [
-          isA<OnboardingWelcomeScreen>(),
+          isA<OnboardingComplete>(),
         ],
         wait: const Duration(milliseconds: 100),
       );
 
-      test('should save download completion to storage', () async {
+      test('should save onboarding completion to storage', () async {
         final bloc = OnboardingBloc();
-        bloc.emit(OnboardingDownloadScreen());
+        bloc.emit(OnboardingTermsScreen());
 
         bloc.add(CompleteDownload());
         await Future.delayed(const Duration(milliseconds: 200));
 
-        final hasCompletedDownload =
-            await StorageService.getSetting<bool>('hasCompletedDownload');
-        expect(hasCompletedDownload, isTrue);
+        final hasCompletedOnboarding =
+            await StorageService.getSetting<bool>('hasCompletedOnboarding');
+        expect(hasCompletedOnboarding, isTrue);
 
         bloc.close();
       });
