@@ -429,67 +429,83 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
       ),
       child: SafeArea(
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Voice input button
-            BlocListener<VoiceBloc, VoiceState>(
-              listener: (context, voiceState) {
-                if (voiceState is VoiceReady && voiceState.isListening) {
-                  // Handle voice input received
-                  // This will be handled by the VoiceBloc
-                }
-              },
-              child: VoiceInputButton(
-                onVoiceInput: (text) {
-                  _messageController.text = text;
-                  _handleSubmitted(text);
-                },
-              ),
-            ),
-            const SizedBox(width: AppConstants.paddingSmall),
-            Expanded(
-              child: TextField(
-                controller: _messageController,
-                onChanged: (text) {
-                  setState(() {
-                    _isComposing = text.isNotEmpty;
-                  });
-                },
-                onSubmitted: _isComposing ? _handleSubmitted : null,
-                decoration: InputDecoration(
-                  hintText: 'Type a message or tap the mic...',
-                  border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(AppConstants.borderRadiusMedium),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: AppConstants.paddingMedium,
-                    vertical: AppConstants.paddingSmall,
+            // Row 1: Text input field
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    onChanged: (text) {
+                      setState(() {
+                        _isComposing = text.isNotEmpty;
+                      });
+                    },
+                    onSubmitted: _isComposing ? _handleSubmitted : null,
+                    decoration: InputDecoration(
+                      hintText: 'Type a message or tap the mic...',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(
+                            AppConstants.borderRadiusMedium),
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: true,
+                      fillColor:
+                          Theme.of(context).colorScheme.surfaceContainerHighest,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: AppConstants.paddingMedium,
+                        vertical: AppConstants.paddingSmall,
+                      ),
+                    ),
+                    maxLines: null,
+                    textCapitalization: TextCapitalization.sentences,
                   ),
                 ),
-                maxLines: null,
-                textCapitalization: TextCapitalization.sentences,
-              ),
+              ],
             ),
-            const SizedBox(width: AppConstants.paddingSmall),
-            IconButton(
-              icon: const Icon(Icons.attach_file),
-              onPressed: () {
-                // TODO: Implement file upload
-              },
-              tooltip: 'Attach file',
-            ),
-            const SizedBox(width: AppConstants.paddingSmall),
-            IconButton(
-              icon: const Icon(Icons.send),
-              onPressed: _isComposing
-                  ? () => _handleSubmitted(_messageController.text)
-                  : null,
-              tooltip: 'Send message',
+            const SizedBox(height: 8),
+            // Row 2: Action buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                // Voice input button
+                BlocListener<VoiceBloc, VoiceState>(
+                  listener: (context, voiceState) {
+                    if (voiceState is VoiceReady && voiceState.isListening) {
+                      // Handle voice input received
+                    }
+                  },
+                  child: VoiceInputButton(
+                    onVoiceInput: (text) {
+                      _messageController.text = text;
+                      _handleSubmitted(text);
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.attach_file),
+                  onPressed: () {
+                    // TODO: Implement file upload
+                  },
+                  tooltip: 'Attach file',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  onPressed: () {
+                    // TODO: Open settings or show options
+                  },
+                  tooltip: 'Settings',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.send),
+                  onPressed: _isComposing
+                      ? () => _handleSubmitted(_messageController.text)
+                      : null,
+                  tooltip: 'Send message',
+                ),
+              ],
             ),
           ],
         ),
