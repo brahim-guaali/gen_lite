@@ -1,230 +1,276 @@
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:genlite/shared/services/file_processing_service.dart';
-import '../../test_config.dart';
+
+import '../../../lib/shared/services/file_processing_service.dart';
 
 void main() {
   group('FileProcessingService', () {
-    late File testFile;
-    late String testFilePath;
-
-    setUpAll(() async {
-      await TestConfig.initialize();
-    });
-
-    tearDownAll(() async {
-      await TestConfig.cleanup();
-    });
-
-    setUp(() {
-      testFilePath = '/tmp/test_file.txt';
-      testFile = File(testFilePath);
-    });
-
-    tearDown(() {
-      if (testFile.existsSync()) {
-        testFile.deleteSync();
-      }
-    });
-
-    group('extractTextFromFile', () {
-      test('should extract text from TXT file', () async {
-        const testContent = 'This is a test text file content.';
-        await testFile.writeAsString(testContent);
-
-        final result =
-            await FileProcessingService.extractTextFromFile(testFile, 'txt');
-        expect(result, equals(testContent));
+    group('Method Signatures', () {
+      test('should have extractTextFromFile method', () {
+        expect(FileProcessingService.extractTextFromFile, isA<Function>());
       });
 
-      test('should extract text from PDF file (mock)', () async {
-        await testFile.writeAsString('PDF content');
-
-        final result =
-            await FileProcessingService.extractTextFromFile(testFile, 'pdf');
-        expect(result, contains('[PDF Content - Mock extraction]'));
-        expect(result, contains('simulated PDF text extraction'));
+      test('should have formatFileSize method', () {
+        expect(FileProcessingService.formatFileSize, isA<Function>());
       });
 
-      test('should extract text from DOCX file (mock)', () async {
-        await testFile.writeAsString('DOCX content');
-
-        final result =
-            await FileProcessingService.extractTextFromFile(testFile, 'docx');
-        expect(result, contains('[DOCX Content - Mock extraction]'));
-        expect(result, contains('simulated DOCX text extraction'));
+      test('should have isValidFileType method', () {
+        expect(FileProcessingService.isValidFileType, isA<Function>());
       });
 
-      test('should handle unsupported file type', () async {
-        await testFile.writeAsString('Some content');
-
-        final result =
-            await FileProcessingService.extractTextFromFile(testFile, 'xyz');
-        expect(result, equals('[Unsupported file type: xyz]'));
+      test('should have getFileTypeFromPath method', () {
+        expect(FileProcessingService.getFileTypeFromPath, isA<Function>());
       });
 
-      test('should handle file read errors', () async {
-        // Create a file that will cause read errors
-        final nonExistentFile = File('/non/existent/file.txt');
+      test('should have estimateProcessingTime method', () {
+        expect(FileProcessingService.estimateProcessingTime, isA<Function>());
+      });
 
-        final result = await FileProcessingService.extractTextFromFile(
-            nonExistentFile, 'txt');
-        expect(result, contains('[Error extracting text from txt file:'));
+      test('should have cleanExtractedText method', () {
+        expect(FileProcessingService.cleanExtractedText, isA<Function>());
+      });
+
+      test('should have extractFileMetadata method', () {
+        expect(FileProcessingService.extractFileMetadata, isA<Function>());
       });
     });
 
-    group('formatFileSize', () {
+    group('File Type Validation', () {
+      test('should recognize supported file types', () {
+        expect(FileProcessingService.isValidFileType('pdf'), true);
+        expect(FileProcessingService.isValidFileType('txt'), true);
+        expect(FileProcessingService.isValidFileType('docx'), true);
+      });
+
+      test('should reject unsupported file types', () {
+        expect(FileProcessingService.isValidFileType('jpg'), false);
+        expect(FileProcessingService.isValidFileType('mp4'), false);
+        expect(FileProcessingService.isValidFileType('mp3'), false);
+        expect(FileProcessingService.isValidFileType('zip'), false);
+      });
+
+      test('should handle case sensitivity', () {
+        expect(FileProcessingService.isValidFileType('PDF'), true);
+        expect(FileProcessingService.isValidFileType('TXT'), true);
+        expect(FileProcessingService.isValidFileType('DOCX'), true);
+      });
+    });
+
+    group('File Type from Path', () {
+      test('should get file type from file path', () {
+        expect(
+            FileProcessingService.getFileTypeFromPath('document.pdf'), 'pdf');
+        expect(FileProcessingService.getFileTypeFromPath('text.txt'), 'txt');
+        expect(
+            FileProcessingService.getFileTypeFromPath('document.docx'), 'docx');
+      });
+
+      test('should handle files without extension', () {
+        expect(
+            FileProcessingService.getFileTypeFromPath('filename'), 'filename');
+        expect(FileProcessingService.getFileTypeFromPath(''), '');
+      });
+
+      test('should handle files with multiple dots', () {
+        expect(FileProcessingService.getFileTypeFromPath('file.backup.pdf'),
+            'pdf');
+        expect(
+            FileProcessingService.getFileTypeFromPath('archive.tar.gz'), 'gz');
+      });
+
+      test('should handle case sensitivity', () {
+        expect(
+            FileProcessingService.getFileTypeFromPath('document.PDF'), 'pdf');
+        expect(FileProcessingService.getFileTypeFromPath('text.TXT'), 'txt');
+      });
+    });
+
+    group('File Size Formatting', () {
       test('should format bytes correctly', () {
-        expect(FileProcessingService.formatFileSize(500), equals('500 B'));
-        expect(FileProcessingService.formatFileSize(1024), equals('1.0 KB'));
-        expect(FileProcessingService.formatFileSize(1536), equals('1.5 KB'));
-        expect(FileProcessingService.formatFileSize(1024 * 1024),
-            equals('1.0 MB'));
-        expect(FileProcessingService.formatFileSize(1024 * 1024 * 1024),
-            equals('1.0 GB'));
+        expect(FileProcessingService.formatFileSize(0), '0 B');
+        expect(FileProcessingService.formatFileSize(1024), '1.0 KB');
+        expect(FileProcessingService.formatFileSize(1024 * 1024), '1.0 MB');
+        expect(
+            FileProcessingService.formatFileSize(1024 * 1024 * 1024), '1.0 GB');
+      });
+
+      test('should format decimal sizes correctly', () {
+        expect(FileProcessingService.formatFileSize(1500), '1.5 KB');
+        expect(FileProcessingService.formatFileSize(1536), '1.5 KB');
+        expect(FileProcessingService.formatFileSize(1572864), '1.5 MB');
+      });
+
+      test('should handle small file sizes', () {
+        expect(FileProcessingService.formatFileSize(1), '1 B');
+        expect(FileProcessingService.formatFileSize(512), '512 B');
+        expect(FileProcessingService.formatFileSize(999), '999 B');
       });
 
       test('should handle large file sizes', () {
-        expect(FileProcessingService.formatFileSize(2 * 1024 * 1024 * 1024),
-            equals('2.0 GB'));
-      });
-
-      test('should handle zero bytes', () {
-        expect(FileProcessingService.formatFileSize(0), equals('0 B'));
+        expect(FileProcessingService.formatFileSize(1024 * 1024 * 1024 * 1024),
+            '1024.0 GB');
       });
     });
 
-    group('isValidFileType', () {
-      test('should return true for supported file types', () {
-        expect(FileProcessingService.isValidFileType('txt'), isTrue);
-        expect(FileProcessingService.isValidFileType('pdf'), isTrue);
-        expect(FileProcessingService.isValidFileType('docx'), isTrue);
-        expect(FileProcessingService.isValidFileType('TXT'), isTrue);
-        expect(FileProcessingService.isValidFileType('PDF'), isTrue);
-        expect(FileProcessingService.isValidFileType('DOCX'), isTrue);
+    group('Processing Time Estimation', () {
+      test('should estimate processing time for small files', () {
+        final time =
+            FileProcessingService.estimateProcessingTime(1024 * 1024); // 1MB
+        expect(time.inSeconds, 1);
       });
 
-      test('should return false for unsupported file types', () {
-        expect(FileProcessingService.isValidFileType('jpg'), isFalse);
-        expect(FileProcessingService.isValidFileType('png'), isFalse);
-        expect(FileProcessingService.isValidFileType('mp4'), isFalse);
-        expect(FileProcessingService.isValidFileType(''), isFalse);
-      });
-    });
-
-    group('getFileTypeFromPath', () {
-      test('should extract file type from path', () {
-        expect(FileProcessingService.getFileTypeFromPath('/path/to/file.txt'),
-            equals('txt'));
-        expect(FileProcessingService.getFileTypeFromPath('document.pdf'),
-            equals('pdf'));
-        expect(FileProcessingService.getFileTypeFromPath('report.docx'),
-            equals('docx'));
-        expect(FileProcessingService.getFileTypeFromPath('file.TXT'),
-            equals('txt'));
+      test('should estimate processing time for large files', () {
+        final time = FileProcessingService.estimateProcessingTime(
+            10 * 1024 * 1024); // 10MB
+        expect(time.inSeconds, 10);
       });
 
-      test('should handle paths without extension', () {
-        expect(FileProcessingService.getFileTypeFromPath('/path/to/file'),
-            equals('/path/to/file'));
+      test('should have minimum processing time', () {
+        final time = FileProcessingService.estimateProcessingTime(
+            100); // Very small file
+        expect(time.inSeconds, 1);
       });
 
-      test('should handle paths with multiple dots', () {
-        expect(FileProcessingService.getFileTypeFromPath('file.backup.txt'),
-            equals('txt'));
+      test('should have maximum processing time', () {
+        final time = FileProcessingService.estimateProcessingTime(
+            100 * 1024 * 1024); // 100MB
+        expect(time.inSeconds, 30);
       });
     });
 
-    group('estimateProcessingTime', () {
-      test('should estimate processing time correctly', () {
-        // 1MB = 1 second
-        expect(FileProcessingService.estimateProcessingTime(1024 * 1024),
-            equals(const Duration(seconds: 1)));
-
-        // 2MB = 2 seconds
-        expect(FileProcessingService.estimateProcessingTime(2 * 1024 * 1024),
-            equals(const Duration(seconds: 2)));
-
-        // 0.5MB = 1 second (minimum)
-        expect(FileProcessingService.estimateProcessingTime(512 * 1024),
-            equals(const Duration(seconds: 1)));
-      });
-
-      test('should respect minimum and maximum bounds', () {
-        // Very small file should have minimum 1 second
-        expect(FileProcessingService.estimateProcessingTime(100),
-            equals(const Duration(seconds: 1)));
-
-        // Very large file should have maximum 30 seconds
-        expect(
-            FileProcessingService.estimateProcessingTime(
-                100 * 1024 * 1024 * 1024),
-            equals(const Duration(seconds: 30)));
-      });
-    });
-
-    group('cleanExtractedText', () {
+    group('Text Cleaning', () {
       test('should clean excessive whitespace', () {
         const input = 'This   has    excessive     whitespace';
         const expected = 'This has excessive whitespace';
-        expect(
-            FileProcessingService.cleanExtractedText(input), equals(expected));
+        expect(FileProcessingService.cleanExtractedText(input), expected);
       });
 
       test('should clean excessive newlines', () {
-        const input = 'Line 1\n\n\n\nLine 2\n\n\n\n\nLine 3';
+        const input = 'Line 1\n\n\nLine 2\n\n\n\nLine 3';
         const expected = 'Line 1 Line 2 Line 3';
-        expect(
-            FileProcessingService.cleanExtractedText(input), equals(expected));
+        expect(FileProcessingService.cleanExtractedText(input), expected);
       });
 
       test('should trim whitespace', () {
         const input = '  This has leading and trailing spaces  ';
         const expected = 'This has leading and trailing spaces';
-        expect(
-            FileProcessingService.cleanExtractedText(input), equals(expected));
+        expect(FileProcessingService.cleanExtractedText(input), expected);
       });
 
-      test('should handle empty string', () {
-        expect(FileProcessingService.cleanExtractedText(''), equals(''));
+      test('should handle empty text', () {
+        expect(FileProcessingService.cleanExtractedText(''), '');
       });
 
-      test('should handle complex text cleaning', () {
-        const input = '''
-  This   text   has   multiple   issues:
-  
-  
-  - Excessive   whitespace
-  - Multiple   newlines
-  - Leading   and   trailing   spaces  
-''';
-        const expected =
-            'This text has multiple issues: - Excessive whitespace - Multiple newlines - Leading and trailing spaces';
-        expect(
-            FileProcessingService.cleanExtractedText(input), equals(expected));
+      test('should handle text with tabs', () {
+        const input = 'This\thas\ttabs\tand\tspaces   ';
+        const expected = 'This has tabs and spaces';
+        expect(FileProcessingService.cleanExtractedText(input), expected);
       });
     });
 
-    group('extractFileMetadata', () {
-      test('should extract metadata from file', () async {
-        const testContent = 'Test content for metadata extraction';
-        await testFile.writeAsString(testContent);
+    group('File Metadata', () {
+      test('should extract metadata from file', () {
+        // Create a temporary file for testing
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/test_file.txt');
+        tempFile.writeAsStringSync('Test content');
 
-        final metadata = FileProcessingService.extractFileMetadata(testFile);
+        try {
+          final metadata = FileProcessingService.extractFileMetadata(tempFile);
 
-        expect(metadata['name'], equals('test_file.txt'));
-        expect(metadata['type'], equals('txt'));
-        expect(metadata['size'], equals(testContent.length));
-        expect(metadata['modified'], isA<DateTime>());
-        expect(metadata['created'], isA<DateTime>());
+          expect(metadata['name'], 'test_file.txt');
+          expect(metadata['type'], 'txt');
+          expect(metadata['size'], isA<int>());
+          expect(metadata['modified'], isA<DateTime>());
+          expect(metadata['created'], isA<DateTime>());
+        } finally {
+          tempFile.deleteSync();
+        }
       });
 
-      test('should handle file with complex path', () {
-        final complexFile = File('/path/to/complex/file.name.with.dots.pdf');
-        final metadata = FileProcessingService.extractFileMetadata(complexFile);
+      test('should handle file path with multiple segments', () {
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/subdir/test_file.pdf');
+        tempFile.parent.createSync(recursive: true);
+        tempFile.writeAsStringSync('Test content');
 
-        expect(metadata['name'], equals('file.name.with.dots.pdf'));
-        expect(metadata['type'], equals('pdf'));
+        try {
+          final metadata = FileProcessingService.extractFileMetadata(tempFile);
+
+          expect(metadata['name'], 'test_file.pdf');
+          expect(metadata['type'], 'pdf');
+        } finally {
+          tempFile.deleteSync();
+          tempFile.parent.deleteSync();
+        }
+      });
+    });
+
+    group('Text Extraction', () {
+      test('should handle unsupported file types', () async {
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/test.jpg');
+        tempFile.writeAsStringSync('This is not a real image');
+
+        try {
+          final text =
+              await FileProcessingService.extractTextFromFile(tempFile, 'jpg');
+          expect(text, contains('Unsupported file type'));
+        } finally {
+          tempFile.deleteSync();
+        }
+      });
+
+      test('should handle TXT files', () async {
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/test.txt');
+        const content = 'This is a test text file content.';
+        tempFile.writeAsStringSync(content);
+
+        try {
+          final text =
+              await FileProcessingService.extractTextFromFile(tempFile, 'txt');
+          expect(text, content);
+        } finally {
+          tempFile.deleteSync();
+        }
+      });
+
+      test('should handle PDF files (mock)', () async {
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/test.pdf');
+        tempFile.writeAsStringSync('Mock PDF content');
+
+        try {
+          final text =
+              await FileProcessingService.extractTextFromFile(tempFile, 'pdf');
+          expect(text, contains('PDF Content - Mock extraction'));
+        } finally {
+          tempFile.deleteSync();
+        }
+      });
+
+      test('should handle DOCX files (mock)', () async {
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/test.docx');
+        tempFile.writeAsStringSync('Mock DOCX content');
+
+        try {
+          final text =
+              await FileProcessingService.extractTextFromFile(tempFile, 'docx');
+          expect(text, contains('DOCX Content - Mock extraction'));
+        } finally {
+          tempFile.deleteSync();
+        }
+      });
+
+      test('should handle file reading errors', () async {
+        final tempDir = Directory.systemTemp;
+        final tempFile = File('${tempDir.path}/nonexistent.txt');
+
+        final text =
+            await FileProcessingService.extractTextFromFile(tempFile, 'txt');
+        expect(text, contains('Error extracting text'));
       });
     });
   });

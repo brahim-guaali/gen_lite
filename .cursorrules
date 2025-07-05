@@ -170,7 +170,12 @@ testWidgets('should render correctly', (WidgetTester tester) async {
 - Widget tests for UI components
 - Integration tests for user workflows
 - Mock external dependencies
-- Aim for high test coverage
+- **MANDATORY: Maintain 80%+ test coverage at all times**
+- Run `flutter test --coverage` before committing to verify coverage
+- Add tests for all new features and bug fixes
+- Focus on critical business logic and user-facing functionality
+- Test both success and error scenarios
+- Use descriptive test names that explain expected behavior
 
 ## Code Quality
 - Follow Flutter/Dart style guide
