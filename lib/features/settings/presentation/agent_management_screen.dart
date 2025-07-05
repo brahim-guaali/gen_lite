@@ -7,7 +7,6 @@ import '../models/agent_model.dart';
 import '../../../shared/widgets/loading_indicator.dart';
 import '../../../shared/widgets/voice_components.dart';
 import '../../voice/bloc/voice_bloc.dart';
-import '../../voice/bloc/voice_event.dart';
 import '../../voice/bloc/voice_state.dart';
 
 class AgentManagementScreen extends StatelessWidget {
