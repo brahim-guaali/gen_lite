@@ -490,7 +490,24 @@ class MainScreen extends StatefulWidget {
 - **Memory Efficiency**: Only active tab is rendered, others are kept in memory
 - **Scroll Position**: Chat scroll position is maintained across tab switches
 
-### 4.5 Voice UI Components
+### 4.5 Settings Hub and Navigation
+
+- The Settings screen is now a hub for all app configuration and info.
+- The main Settings screen presents a list of options:
+  1. **Agents**: Manage AI agents (opens Agent Management screen)
+  2. **Voice**: Configure voice input/output (opens Voice Settings screen)
+  3. **About**: App info, version, licenses, etc. (opens About screen)
+- Tapping an option navigates to the corresponding screen.
+- Each sub-screen has a back button to return to Settings Home.
+- Settings is the entry point for all configuration and info screens.
+
+#### Settings Integration Phase (Updated)
+- Refactor Settings to be a hub with navigation to Agents, Voice, and About screens
+- Ensure navigation and back behavior is consistent
+- Add About screen if not present
+- Update widget and integration tests for new navigation
+
+### 4.6 Voice UI Components
 **Location**: `lib/shared/widgets/voice_components.dart`
 
 **Voice Input Button**:

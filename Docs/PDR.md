@@ -168,11 +168,10 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 **So that** I can optimize the experience for my needs
 
 **Acceptance Criteria:**
-- [ ] AI temperature and creativity settings
-- [ ] Response length preferences
-- [ ] Model performance settings
-- [ ] Theme customization (light/dark)
-- [ ] Language preferences
+- [ ] Settings Home lists all configuration categories (Agents, Voice, About)
+- [ ] Each category opens a dedicated screen
+- [ ] Navigation is clear and consistent
+- [ ] About screen shows app version, licenses, and privacy info
 
 ---
 
@@ -218,6 +217,17 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - **Screen Transitions**: Smooth animations between screens
 - **Error States**: Clear error messages and recovery options
 - **Loading States**: Appropriate loading indicators
+
+#### 4.2.3 Settings Navigation Redesign (2024-07)
+
+- The Settings screen is now a hub for all app configuration and info.
+- The main Settings screen presents a list of options:
+  1. **Agents**: Manage AI agents (opens Agent Management screen)
+  2. **Voice**: Configure voice input/output (opens Voice Settings screen)
+  3. **About**: App info, version, licenses, etc. (opens About screen)
+- Tapping an option navigates to the corresponding screen.
+- Each sub-screen has a back button to return to Settings Home.
+- Settings is the entry point for all configuration and info screens.
 
 ### 4.3 Data Management
 
