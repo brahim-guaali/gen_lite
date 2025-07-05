@@ -13,7 +13,7 @@ import 'package:genlite/features/chat/presentation/chat_screen.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:genlite/features/chat/bloc/chat_bloc.dart';
 import 'package:genlite/features/chat/bloc/chat_states.dart';
-import 'package:genlite/features/settings/bloc/agent_bloc.dart';
+import '../lib/features/settings/bloc/agent_bloc.dart';
 import 'package:genlite/features/settings/bloc/agent_states.dart';
 import 'package:genlite/features/voice/bloc/voice_bloc.dart';
 import 'package:genlite/features/voice/bloc/voice_state.dart';
