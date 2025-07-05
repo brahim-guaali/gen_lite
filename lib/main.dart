@@ -11,6 +11,8 @@ import 'features/settings/bloc/agent_events.dart';
 import 'features/settings/bloc/agent_states.dart';
 import 'features/settings/presentation/agent_management_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
+import 'features/voice/bloc/voice_bloc.dart';
+import 'features/voice/bloc/voice_event.dart';
 import 'shared/services/storage_service.dart';
 
 void main() async {
@@ -66,6 +68,10 @@ class _GenLiteAppState extends State<GenLiteApp> {
         BlocProvider(create: (context) => FileBloc()),
         BlocProvider(
             create: (context) => AgentBloc()..add(LoadAgentTemplates())),
+        BlocProvider(
+          create: (context) =>
+              VoiceBloc()..add(const InitializeVoiceServices()),
+        ),
       ],
       child: MaterialApp(
         title: 'GenLite',
