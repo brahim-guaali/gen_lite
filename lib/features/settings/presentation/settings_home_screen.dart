@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'agent_management_screen.dart';
-import '../widgets/voice_settings_section.dart';
+import './voice_settings_screen.dart';
 import 'about_screen.dart';
 
 class SettingsHomeScreen extends StatelessWidget {
@@ -60,19 +60,6 @@ class SettingsHomeScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// Placeholder for VoiceSettingsScreen
-class VoiceSettingsScreen extends StatelessWidget {
-  const VoiceSettingsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Voice Settings')),
-      body: const VoiceSettingsSection(),
     );
   }
 }
