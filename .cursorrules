@@ -70,12 +70,303 @@ lib/features/chat/
 - Return meaningful error messages
 - Use async/await for asynchronous operations
 
-### Testing
-- Create comprehensive test coverage
-- Use `TestConfig.initialize()` and `TestConfig.cleanup()` for test setup
-- Mock external dependencies (StorageService, PathProvider)
+## Logging & Debugging
+
+### Logging Strategy
+- Use structured logging with consistent format
+- Include context information in log messages
+- Use appropriate log levels (debug, info, warning, error)
+- Log at method entry/exit for complex operations
+- Include relevant data for debugging
+
+### Logging Patterns
+```dart
+// Service logging
+class ChatService {
+  static const String _tag = '[ChatService]';
+  
+  Future<void> sendMessage(String message) async {
+    print('$_tag Sending message: "${message.substring(0, min(50, message.length))}..."');
+    
+    try {
+      // Business logic
+      print('$_tag Message sent successfully');
+    } catch (e) {
+      print('$_tag Error sending message: $e');
+      rethrow;
+    }
+  }
+}
+
+// BLoC logging
+class ChatBloc extends Bloc<ChatEvent, ChatState> {
+  static const String _tag = '[ChatBloc]';
+  
+  Future<void> _onSendMessage(SendMessage event, Emitter<ChatState> emit) async {
+    print('$_tag Starting to process message: "${event.message}"');
+    
+    try {
+      // Business logic
+      print('$_tag Message processed successfully');
+    } catch (e) {
+      print('$_tag Error processing message: $e');
+      print('$_tag Emitting error state...');
+      emit(ChatError(e.toString()));
+    }
+  }
+}
+```
+
+### Debug Information
+- Log method parameters and return values for complex operations
+- Include stack traces for errors when appropriate
+- Log state transitions in BLoCs
+- Track performance metrics for slow operations
+- Use conditional logging based on build mode
+
+### Debug Helpers
+```dart
+// Debug utility
+class DebugUtils {
+  static bool get isDebugMode => kDebugMode;
+  
+  static void log(String tag, String message, {Object? data}) {
+    if (isDebugMode) {
+      final timestamp = DateTime.now().toIso8601String();
+      final dataStr = data != null ? ' | Data: $data' : '';
+      print('$timestamp $tag $message$dataStr');
+    }
+  }
+  
+  static void logMethod(String className, String methodName, {Map<String, dynamic>? params}) {
+    if (isDebugMode) {
+      final paramStr = params != null ? ' | Params: $params' : '';
+      print('[$className] Entering $methodName$paramStr');
+    }
+  }
+}
+```
+
+### Error Tracking
+- Log all exceptions with context
+- Include user actions that led to errors
+- Track error frequency and patterns
+- Provide user-friendly error messages
+- Implement error reporting for critical failures
+
+## Testing Best Practices
+
+### Test Structure & Organization
+- Mirror the `lib/` structure in `test/`
+- Group related tests using `group()`
+- Use descriptive test names that explain expected behavior
+- Follow AAA pattern: Arrange, Act, Assert
+- Keep tests focused and single-purpose
+
+### Test Naming Conventions
+```dart
+// Good test names
+test('should emit ChatLoaded when message is sent successfully', () {});
+test('should handle network errors gracefully', () {});
+test('should validate user input before processing', () {});
+
+// Avoid vague names
+test('test1', () {});
+test('works', () {});
+test('does something', () {});
+```
+
+### BLoC Testing Patterns
+```dart
+// Basic BLoC test structure
+blocTest<ChatBloc, ChatState>(
+  'should emit [ChatLoading, ChatLoaded] when SendMessage succeeds',
+  build: () => ChatBloc(),
+  act: (bloc) => bloc.add(const SendMessage('Hello')),
+  expect: () => [
+    const ChatLoading(),
+    isA<ChatLoaded>(),
+  ],
+);
+
+// Testing error scenarios
+blocTest<ChatBloc, ChatState>(
+  'should emit ChatError when SendMessage fails',
+  build: () => ChatBloc(),
+  act: (bloc) => bloc.add(const SendMessage('')),
+  expect: () => [
+    isA<ChatError>(),
+  ],
+);
+
+// Testing with seed state
+blocTest<ChatBloc, ChatState>(
+  'should update existing conversation',
+  build: () => ChatBloc(),
+  seed: () => const ChatLoaded(conversations: [existingConversation]),
+  act: (bloc) => bloc.add(const SendMessage('New message')),
+  expect: () => [
+    isA<ChatLoaded>(),
+  ],
+);
+```
+
+### Widget Testing Patterns
+```dart
+// Basic widget test
+testWidgets('should render chat input field', (WidgetTester tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestApp(
+      const ChatInputField(),
+    ),
+  );
+  
+  expect(find.byType(TextField), findsOneWidget);
+  expect(find.byType(ElevatedButton), findsOneWidget);
+});
+
+// Testing user interactions
+testWidgets('should send message when button is pressed', (WidgetTester tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestApp(
+      const ChatInputField(),
+    ),
+  );
+  
+  await tester.enterText(find.byType(TextField), 'Hello AI');
+  await tester.tap(find.byType(ElevatedButton));
+  await tester.pump();
+  
+  // Verify expected behavior
+});
+
+// Testing loading states
+testWidgets('should show loading indicator when processing', (WidgetTester tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestApp(
+      const ChatScreen(),
+    ),
+  );
+  
+  await tester.tap(find.byType(ElevatedButton));
+  await tester.pump();
+  
+  expect(find.byType(CircularProgressIndicator), findsOneWidget);
+});
+```
+
+### Service Testing Patterns
+```dart
+// Mocking external dependencies
+@GenerateMocks([StorageService, PathProvider])
+void main() {
+  group('FileProcessingService', () {
+    late MockStorageService mockStorageService;
+    late MockPathProvider mockPathProvider;
+    
+    setUp(() {
+      mockStorageService = MockStorageService();
+      mockPathProvider = MockPathProvider();
+    });
+    
+    test('should process text file successfully', () async {
+      // Arrange
+      when(mockPathProvider.getTemporaryPath())
+          .thenAnswer((_) async => '/tmp');
+      
+      // Act
+      final result = await FileProcessingService.processFile(file);
+      
+      // Assert
+      expect(result, isNotNull);
+      expect(result.text, contains('expected content'));
+    });
+  });
+}
+```
+
+### Integration Testing
+```dart
+// End-to-end user workflows
+testWidgets('complete chat conversation flow', (WidgetTester tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestApp(
+      const ChatScreen(),
+    ),
+  );
+  
+  // Create new conversation
+  await tester.tap(find.byKey(const Key('new_chat_button')));
+  await tester.pump();
+  
+  // Send message
+  await tester.enterText(find.byType(TextField), 'Hello AI');
+  await tester.tap(find.byType(ElevatedButton));
+  await tester.pump();
+  
+  // Verify AI response
+  expect(find.textContaining('AI response'), findsOneWidget);
+});
+```
+
+### Test Data Management
+```dart
+// Test data factories
+class TestData {
+  static ChatMessage createTestMessage({
+    String? content,
+    MessageRole role = MessageRole.user,
+    DateTime? timestamp,
+  }) {
+    return ChatMessage(
+      id: 'test-${DateTime.now().millisecondsSinceEpoch}',
+      content: content ?? 'Test message',
+      role: role,
+      timestamp: timestamp ?? DateTime.now(),
+    );
+  }
+  
+  static Conversation createTestConversation({
+    String? title,
+    List<ChatMessage>? messages,
+  }) {
+    return Conversation(
+      id: 'test-conversation-${DateTime.now().millisecondsSinceEpoch}',
+      title: title ?? 'Test Conversation',
+      messages: messages ?? [createTestMessage()],
+      createdAt: DateTime.now(),
+    );
+  }
+}
+```
+
+### Performance Testing
+```dart
+// Testing performance-critical operations
+test('should process large file within reasonable time', () async {
+  final stopwatch = Stopwatch()..start();
+  
+  await FileProcessingService.processLargeFile(largeFile);
+  
+  stopwatch.stop();
+  expect(stopwatch.elapsedMilliseconds, lessThan(5000)); // 5 seconds max
+});
+```
+
+### Coverage Requirements
+- **MANDATORY: Maintain 80%+ test coverage at all times**
+- Run `flutter test --coverage` before committing
+- Focus on critical business logic and user-facing functionality
 - Test both success and error scenarios
-- Use descriptive test names that explain the expected behavior
+- Include edge cases and boundary conditions
+- Test async operations and error handling
+
+### Test Maintenance
+- Update tests when changing implementation
+- Remove obsolete tests
+- Refactor tests to improve readability
+- Use test helpers to reduce duplication
+- Keep tests fast and reliable
 
 ## Specific Patterns
 
@@ -165,18 +456,6 @@ testWidgets('should render correctly', (WidgetTester tester) async {
 - Follow conventional commit format
 - Keep commits focused and atomic
 
-## Testing Strategy
-- Unit tests for business logic
-- Widget tests for UI components
-- Integration tests for user workflows
-- Mock external dependencies
-- **MANDATORY: Maintain 80%+ test coverage at all times**
-- Run `flutter test --coverage` before committing to verify coverage
-- Add tests for all new features and bug fixes
-- Focus on critical business logic and user-facing functionality
-- Test both success and error scenarios
-- Use descriptive test names that explain expected behavior
-
 ## Code Quality
 - Follow Flutter/Dart style guide
 - Use meaningful variable names
@@ -187,17 +466,20 @@ testWidgets('should render correctly', (WidgetTester tester) async {
 ## When Adding New Features
 1. Follow the established directory structure
 2. Create separate event and state files for BLoCs
-3. Add comprehensive tests
+3. Add comprehensive tests with proper logging
 4. Update documentation if needed
 5. Follow the established naming conventions
 6. Use shared UI components when possible
-7. Implement proper error handling
+7. Implement proper error handling and logging
 8. Consider privacy implications
+9. Ensure test coverage meets 80%+ requirement
 
 ## Common Patterns to Follow
 - Use `TestConfig.createTestApp()` for widget tests
 - Mock `PathProvider` for file system operations
 - Use `StorageService` for persistent data
-- Implement loading states for async operations
+- Implement proper loading states for async operations
 - Use `AppConstants` for consistent styling
-- Follow the established error handling patterns 
+- Follow the established error handling patterns
+- Add comprehensive logging for debugging
+- Write tests for all new functionality 
