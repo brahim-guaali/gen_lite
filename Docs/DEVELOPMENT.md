@@ -117,6 +117,7 @@ class FileProcessingService {
 class CreateNewConversation extends ChatEvent
 class SendMessage extends ChatEvent
 class LoadConversation extends ChatEvent
+class LoadConversations extends ChatEvent
 class ClearConversation extends ChatEvent
 ```
 
@@ -133,6 +134,36 @@ class ChatError extends ChatState
 - Integrates with LLMService for AI responses
 - Supports streaming responses with real-time updates
 - Handles error states and recovery
+
+**State Persistence & Tab Navigation**:
+- **Chat State Persistence**: Chat state is preserved when switching between tabs using `IndexedStack` in `MainScreen`
+- **Scroll Position Preservation**: Scroll position in chat is maintained across tab switches
+- **Service-Based Architecture**: Uses singleton `ChatService` to maintain conversation data in memory
+- **Automatic State Restoration**: `LoadConversations` event automatically restores chat state on bloc initialization
+- **BLoC Lifecycle Management**: ChatBloc is provided at app level to prevent recreation during tab switches
+
+**Key Implementation Details**:
+```dart
+// MainScreen uses IndexedStack for persistent tab state
+body: IndexedStack(
+  index: _currentIndex,
+  children: _screens,
+),
+
+// ChatBloc automatically loads existing conversations
+ChatBloc() : super(ChatInitial()) {
+  _chatService.initialize().then((_) {
+    add(LoadConversations());
+  });
+}
+
+// ChatService maintains in-memory state
+class ChatService {
+  static final ChatService _instance = ChatService._internal();
+  List<Conversation> _conversations = [];
+  Conversation? _currentConversation;
+}
+```
 
 ### 3.2 File Management BLoC
 **Location**: `lib/features/file_management/bloc/`
@@ -250,6 +281,45 @@ class AppProgressBar extends StatelessWidget {
 - Resume functionality indication
 - Error handling and retry options
 - Skip option with confirmation
+
+### 4.4 Tab Navigation Implementation
+**Location**: `lib/main.dart` - `MainScreen`
+
+**Key Features**:
+- **Persistent Tab State**: Uses `IndexedStack` to preserve widget state across tab switches
+- **Scroll Position Preservation**: Chat scroll position is maintained when switching tabs
+- **BLoC Lifecycle Management**: ChatBloc is provided at app level to prevent recreation
+
+**Implementation**:
+```dart
+class MainScreen extends StatefulWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens, // [ChatScreen(), FileManagementScreen(), AgentManagementScreen()]
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) => setState(() => _currentIndex = index),
+        type: BottomNavigationBarType.fixed,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.chat), label: 'Chat'),
+          BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Files'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Settings'),
+        ],
+      ),
+    );
+  }
+}
+```
+
+**Benefits**:
+- **Performance**: No widget recreation during tab switches
+- **User Experience**: Seamless navigation with preserved state
+- **Memory Efficiency**: Only active tab is rendered, others are kept in memory
+- **Scroll Position**: Chat scroll position is maintained across tab switches
 
 ---
 
@@ -375,6 +445,36 @@ blocTest<ChatBloc, ChatState>(
   build: () => ChatBloc(),
   act: (bloc) => bloc.add(SendMessage(content: 'Hello')),
   expect: () => [ChatLoading(), ChatLoaded()],
+);
+
+// Chat State Persistence Testing
+blocTest<ChatBloc, ChatState>(
+  'should not emit anything when LoadConversations called with no conversations',
+  build: () => ChatBloc(),
+  act: (bloc) => bloc.add(LoadConversations()),
+  expect: () => [], // No state change when already in ChatInitial
+);
+
+blocTest<ChatBloc, ChatState>(
+  'should restore chat state when switching tabs',
+  build: () => ChatBloc(),
+  act: (bloc) async {
+    // Create conversation first
+    bloc.add(const CreateNewConversation(title: 'Test Conversation'));
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    // Send a message
+    bloc.add(const SendMessage(content: 'Hello AI'));
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    // Simulate tab switch by loading conversations
+    bloc.add(LoadConversations());
+  },
+  expect: () => [
+    isA<ChatLoaded>(), // From CreateNewConversation
+    isA<ChatLoaded>(), // From SendMessage
+    isA<ChatLoaded>(), // From LoadConversations (restored state)
+  ],
 );
 ```
 
@@ -556,4 +656,4 @@ dependencies:
 
 **Document Version:** 2.0  
 **Last Updated:** July 2025  
-**Next Review:** August 2025 
+**Next Review:** August 2025
