@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/constants/app_constants.dart';
 import '../../voice/bloc/voice_state.dart';
 
 class VoiceStatusIndicator extends StatelessWidget {
