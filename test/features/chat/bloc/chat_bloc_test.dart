@@ -3,10 +3,15 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:genlite/features/chat/bloc/chat_bloc.dart';
 import 'package:genlite/features/chat/bloc/chat_events.dart';
 import 'package:genlite/features/chat/bloc/chat_states.dart';
+import '../../../test_config.dart';
 
 void main() {
   group('ChatBloc', () {
     late ChatBloc chatBloc;
+
+    setUpAll(() {
+      TestConfig.initialize();
+    });
 
     setUp(() {
       chatBloc = ChatBloc();
@@ -14,6 +19,10 @@ void main() {
 
     tearDown(() {
       chatBloc.close();
+    });
+
+    tearDownAll(() {
+      TestConfig.cleanup();
     });
 
     test('initial state should be ChatInitial', () {
@@ -38,6 +47,15 @@ void main() {
         expect: () => [
           isA<ChatError>(),
         ],
+      );
+    });
+
+    group('LoadConversations', () {
+      blocTest<ChatBloc, ChatState>(
+        'should not emit anything when no conversations exist and already in initial state',
+        build: () => chatBloc,
+        act: (bloc) => bloc.add(LoadConversations()),
+        expect: () => [],
       );
     });
 

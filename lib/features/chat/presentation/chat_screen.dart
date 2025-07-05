@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter/services.dart';
 import '../bloc/chat_bloc.dart';
 import '../bloc/chat_events.dart';
 import '../bloc/chat_states.dart';
-import '../../../shared/models/conversation.dart';
 import '../../../shared/models/message.dart';
 import '../../../shared/widgets/message_bubble.dart';
 import '../../../shared/widgets/loading_indicator.dart';
@@ -29,9 +27,8 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    context
-        .read<ChatBloc>()
-        .add(const CreateNewConversation(title: 'New Conversation'));
+    // The ChatBloc now automatically loads existing conversations
+    // No need to create a new conversation here
   }
 
   @override
@@ -162,8 +159,54 @@ class _ChatScreenState extends State<ChatScreen> {
               },
               builder: (context, state) {
                 if (state is ChatInitial) {
-                  return const Center(
-                    child: LoadingIndicator(),
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(AppConstants.paddingLarge),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          AppIcon(
+                            icon: Icons.chat_bubble_outline,
+                            size: 80,
+                            color: AppConstants.primaryColor.withOpacity(0.5),
+                          ),
+                          AppSpacing.lg,
+                          Text(
+                            'Welcome to GenLite',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppConstants.primaryColor,
+                                ),
+                          ),
+                          AppSpacing.md,
+                          Text(
+                            'Your offline AI assistant is ready to help.\nStart your first conversation.',
+                            style:
+                                Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface
+                                          .withOpacity(0.7),
+                                    ),
+                            textAlign: TextAlign.center,
+                          ),
+                          AppSpacing.xl,
+                          PrimaryButton(
+                            text: 'Start New Conversation',
+                            icon: Icons.add,
+                            onPressed: () {
+                              context.read<ChatBloc>().add(
+                                    const CreateNewConversation(
+                                        title: 'New Conversation'),
+                                  );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 }
 

@@ -17,19 +17,46 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<CreateNewConversation>(_onCreateNewConversation);
     on<SendMessage>(_onSendMessage);
     on<LoadConversation>(_onLoadConversation);
+    on<LoadConversations>(_onLoadConversations);
     on<UpdateConversationTitle>(_onUpdateConversationTitle);
     on<ArchiveConversation>(_onArchiveConversation);
     on<DeleteConversation>(_onDeleteConversation);
     on<UpdateStreamingMessage>(_onUpdateStreamingMessage);
 
-    // Initialize the service
-    _chatService.initialize();
+    // Initialize the service and load existing conversations
+    _chatService.initialize().then((_) {
+      // Load existing conversations after service initialization
+      add(LoadConversations());
+    });
   }
 
   // Method to set the active agent from outside the bloc
   void setActiveAgent(AgentModel? agent) {
     _chatService.setActiveAgent(agent);
     print('[ChatBloc] Active agent set to: ${agent?.name ?? 'None'}');
+  }
+
+  void _onLoadConversations(
+    LoadConversations event,
+    Emitter<ChatState> emit,
+  ) async {
+    try {
+      final currentData = _chatService.getCurrentData();
+
+      if (currentData.conversations.isNotEmpty) {
+        // If there are existing conversations, load the first one
+        emit(ChatLoaded(
+          currentConversation: currentData.currentConversation ??
+              currentData.conversations.first,
+          conversations: currentData.conversations,
+        ));
+      } else {
+        // If no conversations exist, stay in initial state
+        emit(ChatInitial());
+      }
+    } catch (e) {
+      emit(ChatError('Failed to load conversations: $e'));
+    }
   }
 
   void _onCreateNewConversation(
@@ -61,7 +88,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final currentData = _chatService.getCurrentData();
 
       if (currentData.currentConversation == null) {
-        emit(ChatError('No active conversation'));
+        emit(const ChatError('No active conversation'));
         return;
       }
 

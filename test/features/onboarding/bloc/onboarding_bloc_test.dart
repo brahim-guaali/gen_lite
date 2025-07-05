@@ -127,15 +127,15 @@ void main() {
 
     group('State Equality', () {
       test('OnboardingError states should be equal with same message', () {
-        final error1 = OnboardingError('Test error');
-        final error2 = OnboardingError('Test error');
+        const error1 = OnboardingError('Test error');
+        const error2 = OnboardingError('Test error');
         expect(error1, equals(error2));
       });
 
       test('OnboardingError states should not be equal with different messages',
           () {
-        final error1 = OnboardingError('Test error 1');
-        final error2 = OnboardingError('Test error 2');
+        const error1 = OnboardingError('Test error 1');
+        const error2 = OnboardingError('Test error 2');
         expect(error1, isNot(equals(error2)));
       });
 

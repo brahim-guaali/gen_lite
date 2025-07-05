@@ -60,18 +60,6 @@ class _GenLiteAppState extends State<GenLiteApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'GenLite',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      home: _hasCompletedOnboarding
-          ? _buildMainApp()
-          : OnboardingScreen(onComplete: _completeOnboarding),
-    );
-  }
-
-  Widget _buildMainApp() {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => ChatBloc()),
@@ -79,7 +67,15 @@ class _GenLiteAppState extends State<GenLiteApp> {
         BlocProvider(
             create: (context) => AgentBloc()..add(LoadAgentTemplates())),
       ],
-      child: const MainScreen(),
+      child: MaterialApp(
+        title: 'GenLite',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        home: _hasCompletedOnboarding
+            ? const MainScreen()
+            : OnboardingScreen(onComplete: _completeOnboarding),
+      ),
     );
   }
 }
@@ -115,7 +111,10 @@ class _MainScreenState extends State<MainScreen> {
         ),
       ],
       child: Scaffold(
-        body: _screens[_currentIndex],
+        body: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
           onTap: (index) => setState(() => _currentIndex = index),

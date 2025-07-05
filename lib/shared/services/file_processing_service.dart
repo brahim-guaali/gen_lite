@@ -35,7 +35,7 @@ class FileProcessingService {
       await Future.delayed(
           const Duration(milliseconds: 1000)); // Simulate processing time
       return '[PDF Content - Mock extraction]\n\nThis is a simulated PDF text extraction. '
-              'In the real implementation, this would extract actual text content from the PDF file. ' +
+          'In the real implementation, this would extract actual text content from the PDF file. '
           'The file contains various sections and paragraphs that would be processed and returned here.';
     } catch (e) {
       throw Exception('Failed to extract text from PDF: ${e.toString()}');
@@ -49,7 +49,7 @@ class FileProcessingService {
       await Future.delayed(
           const Duration(milliseconds: 800)); // Simulate processing time
       return '[DOCX Content - Mock extraction]\n\nThis is a simulated DOCX text extraction. '
-              'In the real implementation, this would extract actual text content from the DOCX file. ' +
+          'In the real implementation, this would extract actual text content from the DOCX file. '
           'The document contains formatted text, tables, and other elements that would be processed.';
     } catch (e) {
       throw Exception('Failed to extract text from DOCX: ${e.toString()}');
