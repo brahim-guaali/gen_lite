@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:genlite/shared/utils/logger.dart';
 
 /// Service for handling text-to-speech functionality
 class TTSService {
@@ -10,6 +11,7 @@ class TTSService {
   final FlutterTts _flutterTts = FlutterTts();
   bool _isInitialized = false;
   bool _isSpeaking = false;
+  Map<String, dynamic> _currentSettings = {};
 
   // Default settings
   static const String defaultLanguage = 'en-US';
@@ -24,34 +26,25 @@ class TTSService {
 
   /// Initialize the text-to-speech service
   Future<void> initialize() async {
+    if (_isInitialized) return;
+
     try {
-      // Set default language
-      await _flutterTts.setLanguage(_language);
+      await _flutterTts.setLanguage('en-US');
+      await _flutterTts.setSpeechRate(0.5);
+      await _flutterTts.setVolume(1.0);
+      await _flutterTts.setPitch(1.0);
 
-      // Set default speech rate
-      await _flutterTts.setSpeechRate(_speechRate);
-
-      // Set default volume
-      await _flutterTts.setVolume(_volume);
-
-      // Set default pitch
-      await _flutterTts.setPitch(_pitch);
-
-      // Set up completion handler
-      _flutterTts.setCompletionHandler(() {
-        _isSpeaking = false;
-      });
-
-      // Set up error handler
-      _flutterTts.setErrorHandler((msg) {
-        print('TTS Error: $msg');
-        _isSpeaking = false;
-      });
+      _currentSettings = {
+        'language': 'en-US',
+        'speechRate': 0.5,
+        'volume': 1.0,
+        'pitch': 1.0,
+      };
 
       _isInitialized = true;
     } catch (e) {
-      print('Failed to initialize TTS: $e');
-      _isInitialized = false;
+      Logger.error(LogTags.ttsService, 'Failed to initialize TTS', error: e);
+      rethrow;
     }
   }
 
@@ -75,8 +68,8 @@ class TTSService {
       _isSpeaking = true;
       await _flutterTts.speak(cleanText);
     } catch (e) {
-      print('Failed to speak text: $e');
-      _isSpeaking = false;
+      Logger.error(LogTags.ttsService, 'Failed to speak text', error: e);
+      rethrow;
     }
   }
 
@@ -95,7 +88,8 @@ class TTSService {
       await _flutterTts.stop();
       _isSpeaking = false;
     } catch (e) {
-      print('Failed to stop TTS: $e');
+      Logger.error(LogTags.ttsService, 'Failed to stop TTS', error: e);
+      rethrow;
     }
   }
 
@@ -110,8 +104,10 @@ class TTSService {
     try {
       await _flutterTts.setLanguage(language);
       _language = language;
+      _currentSettings['language'] = language;
     } catch (e) {
-      print('Failed to set language: $e');
+      Logger.error(LogTags.ttsService, 'Failed to set language', error: e);
+      rethrow;
     }
   }
 
@@ -121,8 +117,10 @@ class TTSService {
       final clampedRate = rate.clamp(0.1, 1.0);
       await _flutterTts.setSpeechRate(clampedRate);
       _speechRate = clampedRate;
+      _currentSettings['speechRate'] = clampedRate;
     } catch (e) {
-      print('Failed to set speech rate: $e');
+      Logger.error(LogTags.ttsService, 'Failed to set speech rate', error: e);
+      rethrow;
     }
   }
 
@@ -132,8 +130,10 @@ class TTSService {
       final clampedVolume = volume.clamp(0.0, 1.0);
       await _flutterTts.setVolume(clampedVolume);
       _volume = clampedVolume;
+      _currentSettings['volume'] = clampedVolume;
     } catch (e) {
-      print('Failed to set volume: $e');
+      Logger.error(LogTags.ttsService, 'Failed to set volume', error: e);
+      rethrow;
     }
   }
 
@@ -143,30 +143,28 @@ class TTSService {
       final clampedPitch = pitch.clamp(0.5, 2.0);
       await _flutterTts.setPitch(clampedPitch);
       _pitch = clampedPitch;
+      _currentSettings['pitch'] = clampedPitch;
     } catch (e) {
-      print('Failed to set pitch: $e');
+      Logger.error(LogTags.ttsService, 'Failed to set pitch', error: e);
+      rethrow;
     }
   }
 
   /// Get available languages
-  Future<List<Map<String, String>>> getAvailableLanguages() async {
+  Future<List<String>> getAvailableLanguages() async {
     try {
       final languages = await _flutterTts.getLanguages;
-      return languages.cast<Map<String, String>>();
+      return languages.cast<String>();
     } catch (e) {
-      print('Failed to get available languages: $e');
+      Logger.error(LogTags.ttsService, 'Failed to get available languages',
+          error: e);
       return [];
     }
   }
 
   /// Get current settings
   Map<String, dynamic> getCurrentSettings() {
-    return {
-      'language': _language,
-      'speechRate': _speechRate,
-      'volume': _volume,
-      'pitch': _pitch,
-    };
+    return Map.from(_currentSettings);
   }
 
   /// Update multiple settings at once
@@ -176,29 +174,36 @@ class TTSService {
     double? volume,
     double? pitch,
   }) async {
-    if (language != null) await setLanguage(language);
-    if (speechRate != null) await setSpeechRate(speechRate);
-    if (volume != null) await setVolume(volume);
-    if (pitch != null) await setPitch(pitch);
+    try {
+      if (language != null) await setLanguage(language);
+      if (speechRate != null) await setSpeechRate(speechRate);
+      if (volume != null) await setVolume(volume);
+      if (pitch != null) await setPitch(pitch);
+    } catch (e) {
+      Logger.error(LogTags.ttsService, 'Failed to update settings', error: e);
+      rethrow;
+    }
   }
 
   /// Check if TTS is supported on this device
   Future<bool> isTTSSupported() async {
     try {
-      final languages = await getAvailableLanguages();
-      return languages.isNotEmpty;
+      final available = await _flutterTts.isLanguageAvailable('en-US');
+      return available == 1;
     } catch (e) {
+      Logger.error(LogTags.ttsService, 'Failed to check TTS support', error: e);
       return false;
     }
   }
 
   /// Dispose of resources
-  void dispose() {
+  Future<void> dispose() async {
     if (_isSpeaking) {
-      _flutterTts.stop();
+      await stop();
     }
     _isSpeaking = false;
     _isInitialized = false;
+    await _flutterTts.stop();
   }
 
   double get speechRate => _speechRate;

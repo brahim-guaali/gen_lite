@@ -31,7 +31,7 @@ class PrimaryButton extends StatelessWidget {
       onPressed: isLoading ? null : onPressed,
       style: ElevatedButton.styleFrom(
         backgroundColor: backgroundColor ?? AppConstants.primaryColor,
-        foregroundColor: textColor ?? Colors.white,
+        foregroundColor: textColor ?? AppConstants.surfaceColor,
         elevation: 0,
         padding: const EdgeInsets.symmetric(
           horizontal: AppConstants.paddingLarge,
@@ -48,7 +48,8 @@ class PrimaryButton extends StatelessWidget {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(AppConstants.surfaceColor),
               ),
             )
           : Row(
@@ -62,7 +63,7 @@ class PrimaryButton extends StatelessWidget {
                   text,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: textColor ?? Colors.white,
+                    color: textColor ?? AppConstants.surfaceColor,
                   ),
                 ),
               ],
@@ -107,7 +108,7 @@ class SecondaryButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         foregroundColor: textColor ?? colorScheme.primary,
         side: BorderSide(
-          color: borderColor ?? colorScheme.primary,
+          color: borderColor ?? AppConstants.primaryColor,
           width: 1.5,
         ),
         padding: const EdgeInsets.symmetric(
@@ -126,8 +127,7 @@ class SecondaryButton extends StatelessWidget {
               child: CircularProgressIndicator(
                 strokeWidth: 2,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  textColor ?? colorScheme.primary,
-                ),
+                    textColor ?? AppConstants.surfaceColor),
               ),
             )
           : Row(
@@ -141,7 +141,7 @@ class SecondaryButton extends StatelessWidget {
                   text,
                   style: theme.textTheme.labelLarge?.copyWith(
                     fontWeight: FontWeight.w600,
-                    color: textColor ?? colorScheme.primary,
+                    color: textColor ?? AppConstants.surfaceColor,
                   ),
                 ),
               ],
@@ -181,7 +181,7 @@ class DangerButton extends StatelessWidget {
       isLoading: isLoading,
       isFullWidth: isFullWidth,
       backgroundColor: AppConstants.errorColor,
-      textColor: Colors.white,
+      textColor: AppConstants.surfaceColor,
     );
   }
 }
@@ -290,7 +290,7 @@ class AppProgressBar extends StatelessWidget {
                   height: height ?? 8,
                   width: constraints.maxWidth * progress,
                   decoration: BoxDecoration(
-                    color: progressColor ?? colorScheme.primary,
+                    color: progressColor ?? AppConstants.primaryColor,
                     borderRadius:
                         BorderRadius.circular(AppConstants.borderRadiusSmall),
                   ),
@@ -346,7 +346,7 @@ class AppIcon extends StatelessWidget {
         child: Icon(
           icon,
           size: size,
-          color: color ?? colorScheme.onSurface,
+          color: color ?? AppConstants.onSurfaceColor,
         ),
       );
     }
@@ -354,7 +354,7 @@ class AppIcon extends StatelessWidget {
     return Icon(
       icon,
       size: size,
-      color: color ?? colorScheme.onSurface,
+      color: color ?? AppConstants.onSurfaceColor,
     );
   }
 }
@@ -365,31 +365,31 @@ class AppText {
   static TextStyle get headline => const TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1E293B),
+        color: AppConstants.textColor,
       );
 
   static TextStyle get subheadline => const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF475569),
+        color: AppConstants.secondaryTextColor,
       );
 
   static TextStyle get body => const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.normal,
-        color: Color(0xFF64748B),
+        color: AppConstants.tertiaryTextColor,
       );
 
   static TextStyle get caption => const TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.normal,
-        color: Color(0xFF94A3B8),
+        color: AppConstants.quaternaryTextColor,
       );
 
   static TextStyle get button => const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Colors.white,
+        color: AppConstants.surfaceColor,
       );
 }
 

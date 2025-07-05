@@ -5,6 +5,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/utils/logger.dart';
 
 class DownloadState {
   final String modelId;
@@ -69,6 +71,9 @@ class ProgressInfo {
 class EnhancedModelDownloader {
   static const String _downloadStateKey = 'model_download_state';
   static const String _downloadStatePrefix = 'download_state_';
+  static const String _modelUrl =
+      'https://huggingface.co/google/gemma-3n-E4B-it-litert-preview/resolve/main/gemma-3n-E4B-it-int4.task';
+  static const String _modelFilename = 'gemma-3n-E4B-it-int4.task';
 
   static Future<String> ensureGemmaModel({
     String modelId = 'google/gemma-3n-E4B-it-litert-preview',
@@ -272,8 +277,8 @@ class EnhancedModelDownloader {
 
         return filePath;
       } catch (e) {
-        print(
-            '[EnhancedModelDownloader] Download attempt ${attempt + 1} failed: $e');
+        Logger.warning(LogTags.enhancedModelDownloader,
+            'Download attempt ${attempt + 1} failed: $e');
 
         // Save error state
         final errorState = DownloadState(
@@ -310,7 +315,9 @@ class EnhancedModelDownloader {
         return DownloadState.fromJson(json.decode(jsonString));
       }
     } catch (e) {
-      print('[EnhancedModelDownloader] Error reading download state: $e');
+      Logger.error(
+          LogTags.enhancedModelDownloader, 'Error reading download state',
+          error: e);
     }
     return null;
   }
@@ -322,7 +329,9 @@ class EnhancedModelDownloader {
       final key = '$_downloadStatePrefix${modelId}_$filename';
       await prefs.setString(key, json.encode(state.toJson()));
     } catch (e) {
-      print('[EnhancedModelDownloader] Error saving download state: $e');
+      Logger.error(
+          LogTags.enhancedModelDownloader, 'Error saving download state',
+          error: e);
     }
   }
 
@@ -333,7 +342,9 @@ class EnhancedModelDownloader {
       final key = '$_downloadStatePrefix${modelId}_$filename';
       await prefs.remove(key);
     } catch (e) {
-      print('[EnhancedModelDownloader] Error clearing download state: $e');
+      Logger.error(
+          LogTags.enhancedModelDownloader, 'Error clearing download state',
+          error: e);
     }
   }
 
@@ -357,6 +368,61 @@ class EnhancedModelDownloader {
       return '${(bytes / 1024).toStringAsFixed(2)} KB';
     } else {
       return '$bytes B';
+    }
+  }
+
+  /// Get the model file path
+  static Future<String> getModelPath() async {
+    final directory = await getApplicationDocumentsDirectory();
+    return '${directory.path}/$_modelFilename';
+  }
+
+  /// Check if model file exists
+  static Future<bool> isModelDownloaded() async {
+    try {
+      final file = File(await getModelPath());
+      return await file.exists();
+    } catch (e) {
+      Logger.error(
+          LogTags.enhancedModelDownloader, 'Error checking model existence',
+          error: e);
+      return false;
+    }
+  }
+
+  /// Get model file size
+  static Future<int> getModelFileSize() async {
+    try {
+      final file = File(await getModelPath());
+      if (await file.exists()) {
+        return await file.length();
+      }
+      return 0;
+    } catch (e) {
+      Logger.error(
+          LogTags.enhancedModelDownloader, 'Error getting model file size',
+          error: e);
+      return 0;
+    }
+  }
+
+  /// Delete model file
+  static Future<bool> deleteModel() async {
+    try {
+      final file = File(await getModelPath());
+      if (await file.exists()) {
+        await file.delete();
+        await clearDownloadState(
+            'google/gemma-3n-E4B-it-litert-preview', _modelFilename);
+        Logger.info(
+            LogTags.enhancedModelDownloader, 'Model file deleted successfully');
+        return true;
+      }
+      return false;
+    } catch (e) {
+      Logger.error(LogTags.enhancedModelDownloader, 'Error deleting model file',
+          error: e);
+      return false;
     }
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:genlite/shared/widgets/loading_indicator.dart';
 import '../../test_config.dart';
+import '../../../lib/core/constants/app_constants.dart';
 
 void main() {
   group('LoadingIndicator', () {
@@ -227,7 +228,8 @@ void main() {
       bool foundOverlayContainer = false;
       for (final element in containers.evaluate()) {
         final container = element.widget as Container;
-        if (container.color == Colors.black.withValues(alpha: 0.3)) {
+        if (container.color == Color.fromARGB(77, 99, 102, 241)) {
+          // AppConstants.primaryColor with 0.3 opacity
           foundOverlayContainer = true;
           break;
         }

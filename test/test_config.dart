@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 import 'package:mockito/mockito.dart';
+import 'package:flutter/services.dart';
 
 /// Test configuration and utilities for GenLite tests
 class TestConfig {
@@ -21,6 +22,9 @@ class TestConfig {
 
     // Initialize Flutter binding
     TestWidgetsFlutterBinding.ensureInitialized();
+
+    // Set up platform channel mocks to prevent MissingPluginException
+    _setupPlatformMocks();
 
     // Create unique test path
     _testPath = '/tmp/test_documents_${DateTime.now().millisecondsSinceEpoch}';
@@ -38,6 +42,69 @@ class TestConfig {
     await _openBox('files');
 
     _isInitialized = true;
+  }
+
+  /// Set up platform channel mocks to prevent MissingPluginException
+  static void _setupPlatformMocks() {
+    // Mock TTS plugin
+    const MethodChannel ttsChannel = MethodChannel('flutter_tts');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(ttsChannel, (MethodCall methodCall) async {
+      switch (methodCall.method) {
+        case 'setLanguage':
+        case 'setSpeechRate':
+        case 'setVolume':
+        case 'setPitch':
+        case 'speak':
+        case 'stop':
+        case 'pause':
+        case 'resume':
+        case 'getLanguages':
+        case 'getSpeechRates':
+        case 'getVolumes':
+        case 'getPitches':
+          return null;
+        default:
+          return null;
+      }
+    });
+
+    // Mock Speech to Text plugin
+    const MethodChannel speechChannel =
+        MethodChannel('plugin.csdcorp.com/speech_to_text');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(speechChannel, (MethodCall methodCall) async {
+      switch (methodCall.method) {
+        case 'initialize':
+        case 'start':
+        case 'stop':
+        case 'cancel':
+        case 'listen':
+          return null;
+        default:
+          return null;
+      }
+    });
+
+    // Mock Path Provider plugin
+    const MethodChannel pathChannel =
+        MethodChannel('plugins.flutter.io/path_provider');
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(pathChannel, (MethodCall methodCall) async {
+      switch (methodCall.method) {
+        case 'getApplicationDocumentsPath':
+        case 'getApplicationSupportPath':
+        case 'getDownloadsPath':
+        case 'getExternalCachePath':
+        case 'getExternalStoragePath':
+        case 'getLibraryPath':
+        case 'getTemporaryPath':
+        case 'getApplicationCachePath':
+          return '/tmp/test_path';
+        default:
+          return null;
+      }
+    });
   }
 
   /// Open a Hive box with error handling
@@ -76,6 +143,16 @@ class TestConfig {
           await directory.delete(recursive: true);
         }
       }
+
+      // Reset platform mocks
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(const MethodChannel('flutter_tts'), null);
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+              const MethodChannel('plugin.csdcorp.com/speech_to_text'), null);
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+              const MethodChannel('plugins.flutter.io/path_provider'), null);
     } catch (e) {
       // Ignore cleanup errors
     } finally {

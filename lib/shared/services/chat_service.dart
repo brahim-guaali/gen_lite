@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:genlite/shared/models/conversation.dart';
 import 'package:genlite/shared/models/message.dart';
 import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/utils/logger.dart';
 import '../../features/settings/models/agent_model.dart';
 import '../../features/chat/bloc/chat_states.dart';
 
@@ -13,6 +15,7 @@ class ChatService {
   List<Conversation> _conversations = [];
   Conversation? _currentConversation;
   AgentModel? _activeAgent;
+  bool _isInitialized = false;
 
   // Getters for current data
   List<Conversation> get conversations => List.unmodifiable(_conversations);
@@ -21,22 +24,43 @@ class ChatService {
 
   // Initialize service
   Future<void> initialize() async {
+    if (_isInitialized) return;
+
     try {
-      await _loadConversationsFromStorage();
+      await _loadConversations();
+      _isInitialized = true;
     } catch (e) {
-      print('[ChatService] Error loading conversations: $e');
-      _conversations = [];
+      Logger.error(LogTags.chatService, 'Error loading conversations',
+          error: e);
+      rethrow;
     }
   }
 
   // Load conversations from persistent storage
-  Future<void> _loadConversationsFromStorage() async {
-    final storedConversations = await StorageService.loadConversations();
-    _conversations =
-        storedConversations.map((data) => Conversation.fromJson(data)).toList();
+  Future<void> _loadConversations() async {
+    try {
+      final conversationsData =
+          await StorageService.getSetting<List<Map<String, dynamic>>>(
+                  'conversations') ??
+              [];
+      _conversations =
+          conversationsData.map((data) => Conversation.fromJson(data)).toList();
 
-    if (_conversations.isNotEmpty) {
-      _currentConversation = _conversations.first;
+      // Load current conversation
+      final currentConversationId =
+          await StorageService.getSetting<String>('current_conversation_id');
+      if (currentConversationId != null) {
+        _currentConversation = _conversations.firstWhere(
+          (conv) => conv.id == currentConversationId,
+          orElse: () => _conversations.isNotEmpty
+              ? _conversations.first
+              : throw Exception('Conversation not found'),
+        );
+      }
+    } catch (e) {
+      Logger.error(LogTags.chatService, 'Error loading conversations',
+          error: e);
+      rethrow;
     }
   }
 
@@ -47,15 +71,18 @@ class ChatService {
       throw Exception('Conversation title cannot be empty');
     }
 
-    final newConversation = Conversation.create(title: title);
+    final conversation = Conversation.create(
+      title: title.trim(),
+      messages: [],
+    );
 
-    _conversations.add(newConversation);
-    _currentConversation = newConversation;
+    _conversations.insert(0, conversation);
+    _currentConversation = conversation;
 
     // Save to persistent storage
-    await _saveConversationsToStorage();
+    await _saveConversations();
 
-    return newConversation;
+    return conversation;
   }
 
   // Send message and get updated conversation
@@ -64,15 +91,10 @@ class ChatService {
     required String conversationId,
   }) async {
     // Find the conversation
-    final conversationIndex = _conversations.indexWhere(
+    final conversation = _conversations.firstWhere(
       (conv) => conv.id == conversationId,
+      orElse: () => throw Exception('Conversation not found: $conversationId'),
     );
-
-    if (conversationIndex == -1) {
-      throw Exception('Conversation not found: $conversationId');
-    }
-
-    final conversation = _conversations[conversationIndex];
 
     // Create user message
     final userMessage = Message.create(
@@ -81,24 +103,22 @@ class ChatService {
       conversationId: conversation.id,
     );
 
-    // Create initial empty AI message for streaming
-    final initialAiMessage = Message.create(
-      content: '',
-      role: MessageRole.assistant,
-      conversationId: conversation.id,
-    );
-
-    // Add both user message and empty AI message to conversation
+    // Add user message to conversation
     final updatedConversation = conversation.copyWith(
-      messages: [...conversation.messages, userMessage, initialAiMessage],
+      messages: [...conversation.messages, userMessage],
     );
 
     // Update in-memory storage
-    _conversations[conversationIndex] = updatedConversation;
+    final index =
+        _conversations.indexWhere((conv) => conv.id == conversationId);
+    if (index != -1) {
+      _conversations[index] = updatedConversation;
+    }
+
     _currentConversation = updatedConversation;
 
     // Save to persistent storage
-    await _saveConversationsToStorage();
+    await _saveConversations();
 
     return updatedConversation;
   }
@@ -108,42 +128,34 @@ class ChatService {
     required String conversationId,
     required String response,
   }) async {
-    final conversationIndex = _conversations.indexWhere(
+    final conversation = _conversations.firstWhere(
       (conv) => conv.id == conversationId,
+      orElse: () => throw Exception('Conversation not found: $conversationId'),
     );
 
-    if (conversationIndex == -1) {
-      throw Exception('Conversation not found: $conversationId');
-    }
+    // Create AI message
+    final aiMessage = Message.create(
+      content: response,
+      role: MessageRole.assistant,
+      conversationId: conversation.id,
+    );
 
-    final conversation = _conversations[conversationIndex];
-    final messages = conversation.messages;
-
-    if (messages.isEmpty) {
-      throw Exception('No messages in conversation');
-    }
-
-    // Find the last assistant message (which should be the empty streaming one)
-    final lastMessage = messages.last;
-    if (lastMessage.role != MessageRole.assistant) {
-      throw Exception('Last message is not from assistant');
-    }
-
-    // Replace the empty AI message with the complete response
-    final updatedMessage = lastMessage.copyWith(content: response);
-    final updatedMessages = [...messages];
-    updatedMessages[updatedMessages.length - 1] = updatedMessage;
-
+    // Add AI message to conversation
     final updatedConversation = conversation.copyWith(
-      messages: updatedMessages,
+      messages: [...conversation.messages, aiMessage],
     );
 
     // Update in-memory storage
-    _conversations[conversationIndex] = updatedConversation;
+    final index =
+        _conversations.indexWhere((conv) => conv.id == conversationId);
+    if (index != -1) {
+      _conversations[index] = updatedConversation;
+    }
+
     _currentConversation = updatedConversation;
 
     // Save to persistent storage
-    await _saveConversationsToStorage();
+    await _saveConversations();
 
     return updatedConversation;
   }
@@ -153,55 +165,68 @@ class ChatService {
     required String conversationId,
     required String token,
   }) async {
-    final conversationIndex = _conversations.indexWhere(
+    final conversation = _conversations.firstWhere(
       (conv) => conv.id == conversationId,
+      orElse: () => throw Exception('Conversation not found: $conversationId'),
     );
 
-    if (conversationIndex == -1) {
-      throw Exception('Conversation not found: $conversationId');
+    // Find the last AI message or create a new one
+    List<Message> updatedMessages = List.from(conversation.messages);
+
+    if (updatedMessages.isNotEmpty &&
+        updatedMessages.last.role == MessageRole.assistant) {
+      // Update existing AI message
+      final lastMessage = updatedMessages.last;
+      updatedMessages[updatedMessages.length - 1] = lastMessage.copyWith(
+        content: lastMessage.content + token,
+      );
+    } else {
+      // Create new AI message
+      final aiMessage = Message.create(
+        content: token,
+        role: MessageRole.assistant,
+        conversationId: conversation.id,
+      );
+      updatedMessages.add(aiMessage);
     }
-
-    final conversation = _conversations[conversationIndex];
-    final messages = conversation.messages;
-
-    if (messages.isEmpty) {
-      throw Exception('No messages in conversation');
-    }
-
-    // Find the last assistant message (which should be the streaming one)
-    final lastMessage = messages.last;
-    if (lastMessage.role != MessageRole.assistant) {
-      throw Exception('Last message is not from assistant');
-    }
-
-    // Update the last message with the new token
-    final updatedMessage = lastMessage.copyWith(
-      content: lastMessage.content + token,
-    );
-
-    final updatedMessages = [...messages];
-    updatedMessages[updatedMessages.length - 1] = updatedMessage;
 
     final updatedConversation = conversation.copyWith(
       messages: updatedMessages,
     );
 
     // Update in-memory storage
-    _conversations[conversationIndex] = updatedConversation;
+    final index =
+        _conversations.indexWhere((conv) => conv.id == conversationId);
+    if (index != -1) {
+      _conversations[index] = updatedConversation;
+    }
+
     _currentConversation = updatedConversation;
+
+    // Save to persistent storage
+    await _saveConversations();
 
     return updatedConversation;
   }
 
   // Load specific conversation
   Future<Conversation?> loadConversation(String conversationId) async {
-    final conversation = _conversations.firstWhere(
-      (conv) => conv.id == conversationId,
-      orElse: () => throw Exception('Conversation not found: $conversationId'),
-    );
+    try {
+      final conversation = _conversations.firstWhere(
+        (conv) => conv.id == conversationId,
+        orElse: () => throw Exception('Conversation not found'),
+      );
 
-    _currentConversation = conversation;
-    return conversation;
+      if (conversation != null) {
+        _currentConversation = conversation;
+        await _saveConversations();
+      }
+
+      return conversation;
+    } catch (e) {
+      Logger.error(LogTags.chatService, 'Error loading conversation', error: e);
+      return null;
+    }
   }
 
   // Update conversation title
@@ -209,120 +234,110 @@ class ChatService {
     required String conversationId,
     required String newTitle,
   }) async {
-    final conversationIndex = _conversations.indexWhere(
-      (conv) => conv.id == conversationId,
-    );
-
-    if (conversationIndex == -1) {
-      throw Exception('Conversation not found: $conversationId');
+    if (newTitle.trim().isEmpty) {
+      throw Exception('Conversation title cannot be empty');
     }
 
-    final conversation = _conversations[conversationIndex];
-    final updatedConversation = conversation.copyWith(title: newTitle);
+    final conversation = _conversations.firstWhere(
+      (conv) => conv.id == conversationId,
+      orElse: () => throw Exception('Conversation not found: $conversationId'),
+    );
+
+    final updatedConversation = conversation.copyWith(
+      title: newTitle.trim(),
+    );
 
     // Update in-memory storage
-    _conversations[conversationIndex] = updatedConversation;
+    final index =
+        _conversations.indexWhere((conv) => conv.id == conversationId);
+    if (index != -1) {
+      _conversations[index] = updatedConversation;
+    }
 
-    // Update current conversation if it's the one being updated
     if (_currentConversation?.id == conversationId) {
       _currentConversation = updatedConversation;
     }
 
     // Save to persistent storage
-    await _saveConversationsToStorage();
+    await _saveConversations();
 
     return updatedConversation;
   }
 
   // Archive conversation
   Future<void> archiveConversation(String conversationId) async {
-    final conversationIndex = _conversations.indexWhere(
+    final conversation = _conversations.firstWhere(
       (conv) => conv.id == conversationId,
+      orElse: () => throw Exception('Conversation not found: $conversationId'),
     );
 
-    if (conversationIndex == -1) {
-      throw Exception('Conversation not found: $conversationId');
-    }
-
-    final conversation = _conversations[conversationIndex];
-    final updatedConversation = conversation.copyWith(isArchived: true);
+    final updatedConversation = conversation.copyWith(
+      isArchived: true,
+    );
 
     // Update in-memory storage
-    _conversations[conversationIndex] = updatedConversation;
+    final index =
+        _conversations.indexWhere((conv) => conv.id == conversationId);
+    if (index != -1) {
+      _conversations[index] = updatedConversation;
+    }
 
-    // Update current conversation if it's the one being archived
     if (_currentConversation?.id == conversationId) {
-      _currentConversation = updatedConversation;
+      _currentConversation = null;
     }
 
     // Save to persistent storage
-    await _saveConversationsToStorage();
+    await _saveConversations();
   }
 
   // Delete conversation
   Future<void> deleteConversation(String conversationId) async {
-    final conversationIndex = _conversations.indexWhere(
-      (conv) => conv.id == conversationId,
-    );
+    _conversations.removeWhere((conv) => conv.id == conversationId);
 
-    if (conversationIndex == -1) {
-      throw Exception('Conversation not found: $conversationId');
-    }
-
-    // Remove from in-memory storage
-    _conversations.removeAt(conversationIndex);
-
-    // Update current conversation if it's the one being deleted
     if (_currentConversation?.id == conversationId) {
       _currentConversation =
           _conversations.isNotEmpty ? _conversations.first : null;
     }
 
     // Save to persistent storage
-    await _saveConversationsToStorage();
+    await _saveConversations();
   }
 
   // Set active agent
   void setActiveAgent(AgentModel? agent) {
     _activeAgent = agent;
-    print('[ChatService] Active agent set to: ${agent?.name ?? 'None'}');
+    Logger.info(
+        LogTags.chatService, 'Active agent set to: ${agent?.name ?? 'None'}');
   }
 
   // Get current data for events
   ChatData getCurrentData() {
     return ChatData(
-      conversations: List.unmodifiable(_conversations),
+      conversations: _conversations,
       currentConversation: _currentConversation,
       activeAgent: _activeAgent,
     );
   }
 
   // Save conversations to persistent storage
-  Future<void> _saveConversationsToStorage() async {
+  Future<void> _saveConversations() async {
     try {
-      for (final conversation in _conversations) {
-        // Create a ChatLoaded object for storage
-        final chatLoaded = ChatLoaded(
-          currentConversation: conversation,
-          conversations: [conversation],
-        );
-        await StorageService.saveConversation(chatLoaded);
+      final conversationsData =
+          _conversations.map((conv) => conv.toJson()).toList();
+      await StorageService.saveSetting('conversations', conversationsData);
+
+      if (_currentConversation != null) {
+        await StorageService.saveSetting(
+            'current_conversation_id', _currentConversation!.id);
       }
     } catch (e) {
-      // In test environment, storage might not be available
-      // This is expected and not an error
-      print(
-          '[ChatService] Storage not available (likely in test environment): $e');
+      Logger.error(LogTags.chatService, 'Error saving conversations', error: e);
+      rethrow;
     }
   }
 
-  // Clear all data (for testing or reset)
-  Future<void> clear() async {
-    _conversations = [];
-    _currentConversation = null;
-    _activeAgent = null;
-    await _saveConversationsToStorage();
-  }
+  // Check if service is initialized
+  bool get isInitialized => _isInitialized;
 }
 
 // Data class to pass current state information

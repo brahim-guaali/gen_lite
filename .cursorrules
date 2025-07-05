@@ -70,6 +70,47 @@ lib/features/chat/
 - Return meaningful error messages
 - Use async/await for asynchronous operations
 
+## Avoiding Deprecated APIs
+
+### Flutter Deprecated Methods
+- **NEVER use deprecated Flutter APIs or methods**
+- Avoid `withOpacity()` - use `Color.fromRGBO()` or `Color.fromARGB()` instead
+- Avoid `RaisedButton` - use `ElevatedButton` instead
+- Avoid `FlatButton` - use `TextButton` instead
+- Avoid `OutlineButton` - use `OutlinedButton` instead
+- Avoid `Scaffold.of(context)` - use `ScaffoldMessenger.of(context)` for snackbars
+- Avoid `Theme.of(context).primaryColor` - use `Theme.of(context).colorScheme.primary` instead
+
+### Deprecated API Examples
+```dart
+// ❌ DEPRECATED - Don't use
+color.withOpacity(0.5)
+RaisedButton(onPressed: () {}, child: Text('Button'))
+FlatButton(onPressed: () {}, child: Text('Button'))
+Scaffold.of(context).showSnackBar(SnackBar(content: Text('Message')))
+
+// ✅ CORRECT - Use these instead
+Color.fromRGBO(255, 255, 255, 0.5)
+Color.fromARGB(128, 255, 255, 255)
+ElevatedButton(onPressed: () {}, child: Text('Button'))
+TextButton(onPressed: () {}, child: Text('Button'))
+ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Message')))
+```
+
+### Checking for Deprecation
+- Run `flutter analyze` regularly to catch deprecated usage
+- Check Flutter documentation for API changes
+- Use IDE warnings to identify deprecated methods
+- Update code when Flutter version is upgraded
+- Test thoroughly after replacing deprecated APIs
+
+### Migration Guidelines
+- Replace deprecated methods immediately when found
+- Test functionality after migration
+- Update related tests to use new APIs
+- Document any breaking changes in migration
+- Consider backward compatibility when possible
+
 ## Logging & Debugging
 
 ### Logging Strategy

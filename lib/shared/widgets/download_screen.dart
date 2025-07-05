@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../core/constants/app_constants.dart';
+
 import 'ui_components.dart';
 import '../services/enhanced_model_downloader.dart';
 import '../services/llm_service.dart';
@@ -9,6 +10,7 @@ import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:genlite/shared/utils/logger.dart';
 
 class DownloadScreen extends StatefulWidget {
   final VoidCallback onDownloadComplete;
@@ -138,8 +140,8 @@ class _DownloadScreenState extends State<DownloadScreen>
 
       final modelPath = await _downloaderDataSource.getFilePath();
       final file = File(modelPath);
-      print('File exists: ${await file.exists()}');
-      print('File size: ${await file.length()}');
+      Logger.debug('[DownloadScreen]', 'File exists: ${await file.exists()}');
+      Logger.debug('[DownloadScreen]', 'File size: ${await file.length()}');
 
       // Initialize LLM service with the model path
       await LLMService().initialize(modelPath: modelPath);
@@ -284,12 +286,12 @@ class _DownloadScreenState extends State<DownloadScreen>
               width: 120,
               height: 120,
               decoration: BoxDecoration(
-                color: AppConstants.primaryColor.withValues(alpha: 0.1),
+                color: Color.fromARGB(26, 99, 102, 241),
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: AppConstants.primaryColor
-                        .withValues(alpha: _pulseController.value * 0.3),
+                    color: Color.fromARGB(
+                        (_pulseController.value * 77).round(), 99, 102, 241),
                     blurRadius: 20,
                     spreadRadius: 5,
                   ),
@@ -326,10 +328,7 @@ class _DownloadScreenState extends State<DownloadScreen>
                   ? 'Setting up the AI model for first use. This may take a moment...'
                   : 'GenLite needs to download a large language model to enable AI features. This may take several minutes.',
           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.7),
+                color: Color.fromARGB(179, 0, 0, 0),
               ),
           textAlign: TextAlign.center,
         ),
@@ -340,7 +339,7 @@ class _DownloadScreenState extends State<DownloadScreen>
   Widget _buildProgressSection() {
     if (_hasError) {
       return AppCard(
-        backgroundColor: AppConstants.errorColor.withValues(alpha: 0.1),
+        backgroundColor: Color.fromARGB(26, 239, 68, 68),
         child: Column(
           children: [
             const Icon(
@@ -398,10 +397,12 @@ class _DownloadScreenState extends State<DownloadScreen>
               const SizedBox(height: AppConstants.paddingMedium),
 
               // Progress bar
-              AppProgressBar(
-                progress: _progress,
-                height: 12,
-                showPercentage: false,
+              LinearProgressIndicator(
+                value: _progress,
+                backgroundColor: AppConstants.surfaceColor,
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppConstants.primaryColor,
+                ),
               ),
               const SizedBox(height: AppConstants.paddingMedium),
 
@@ -413,19 +414,13 @@ class _DownloadScreenState extends State<DownloadScreen>
                     Text(
                       'Downloaded: ${_formatBytes(_receivedBytes)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7),
+                            color: Color.fromARGB(179, 0, 0, 0),
                           ),
                     ),
                     Text(
                       'Total: ${_formatBytes(_totalBytes)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7),
+                            color: Color.fromARGB(179, 0, 0, 0),
                           ),
                     ),
                   ],
@@ -437,19 +432,13 @@ class _DownloadScreenState extends State<DownloadScreen>
                     Text(
                       'Speed: ${_formatSpeed(_speed)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7),
+                            color: Color.fromARGB(179, 0, 0, 0),
                           ),
                     ),
                     Text(
                       'Time: ${_formatElapsed(_elapsed)}',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .onSurface
-                                .withValues(alpha: 0.7),
+                            color: Color.fromARGB(179, 0, 0, 0),
                           ),
                     ),
                   ],

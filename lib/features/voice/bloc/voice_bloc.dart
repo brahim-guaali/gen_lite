@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../shared/services/speech_service.dart';
 import '../../../shared/services/tts_service.dart';
 import '../../../shared/services/storage_service.dart';
+import '../../../shared/utils/logger.dart';
 import 'voice_event.dart';
 import 'voice_state.dart';
 
@@ -40,6 +41,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
     InitializeVoiceServices event,
     Emitter<VoiceState> emit,
   ) async {
+    Logger.logMethod('VoiceBloc', '_onInitializeVoiceServices');
     emit(const VoiceInitializing());
 
     try {
@@ -51,6 +53,8 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final ttsAvailable = await _ttsService.isTTSSupported();
 
       if (!speechAvailable && !ttsAvailable) {
+        Logger.warning(
+            LogTags.voiceBloc, 'Speech recognition and TTS not available');
         emit(const VoiceNotAvailable(
             'Speech recognition and TTS not available'));
         return;
@@ -67,7 +71,11 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
         volume: _ttsService.getCurrentSettings()['volume'],
         pitch: _ttsService.getCurrentSettings()['pitch'],
       ));
+
+      Logger.info(LogTags.voiceBloc, 'Voice services initialized successfully');
     } catch (e) {
+      Logger.error(LogTags.voiceBloc, 'Failed to initialize voice services',
+          error: e);
       emit(VoiceError('Failed to initialize voice services: $e'));
     }
   }
@@ -81,6 +89,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final currentState = state as VoiceReady;
 
       try {
+        Logger.debug(LogTags.voiceBloc, 'Starting to listen for voice input');
         emit(currentState.copyWith(isListening: true));
 
         await _speechService.startListening(
@@ -92,6 +101,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
           },
         );
       } catch (e) {
+        Logger.error(LogTags.voiceBloc, 'Failed to start listening', error: e);
         emit(VoiceError('Failed to start listening: $e'));
       }
     }
@@ -106,9 +116,11 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final currentState = state as VoiceReady;
 
       try {
+        Logger.debug(LogTags.voiceBloc, 'Stopping voice input listening');
         await _speechService.stopListening();
         emit(currentState.copyWith(isListening: false));
       } catch (e) {
+        Logger.error(LogTags.voiceBloc, 'Failed to stop listening', error: e);
         emit(VoiceError('Failed to stop listening: $e'));
       }
     }
@@ -123,6 +135,9 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final currentState = state as VoiceReady;
 
       try {
+        Logger.debug(
+            LogTags.voiceBloc, 'Voice input received: "${event.text}"');
+
         // Stop listening
         await _speechService.stopListening();
 
@@ -135,6 +150,8 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
         // Here you would typically send the text to the chat BLoC
         // This will be handled by the UI layer
       } catch (e) {
+        Logger.error(LogTags.voiceBloc, 'Failed to process voice input',
+            error: e);
         emit(VoiceError('Failed to process voice input: $e'));
         emit(currentState.copyWith(isListening: false));
       }
@@ -150,6 +167,9 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final currentState = state as VoiceReady;
 
       try {
+        Logger.info(
+            LogTags.voiceBloc, 'Toggling voice output: ${event.enabled}');
+
         // Update TTS volume based on enabled state
         final newVolume = event.enabled ? currentState.volume : 0.0;
         await _ttsService.setVolume(newVolume);
@@ -159,6 +179,8 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
 
         emit(currentState.copyWith(voiceOutputEnabled: event.enabled));
       } catch (e) {
+        Logger.error(LogTags.voiceBloc, 'Failed to toggle voice output',
+            error: e);
         emit(VoiceError('Failed to toggle voice output: $e'));
       }
     }
@@ -172,9 +194,14 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
     if (state is VoiceReady) {
       final currentState = state as VoiceReady;
 
-      if (!currentState.voiceOutputEnabled) return;
+      if (!currentState.voiceOutputEnabled) {
+        Logger.debug(
+            LogTags.voiceBloc, 'Voice output disabled, skipping speech');
+        return;
+      }
 
       try {
+        Logger.debug(LogTags.voiceBloc, 'Speaking text: "${event.text}"');
         emit(currentState.copyWith(isSpeaking: true));
 
         await _ttsService.speak(event.text);
@@ -182,6 +209,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
         // Note: The speaking state will be updated when TTS completes
         // This is handled by the TTS service completion handler
       } catch (e) {
+        Logger.error(LogTags.voiceBloc, 'Failed to speak text', error: e);
         emit(VoiceError('Failed to speak text: $e'));
         emit(currentState.copyWith(isSpeaking: false));
       }
@@ -197,9 +225,11 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final currentState = state as VoiceReady;
 
       try {
+        Logger.debug(LogTags.voiceBloc, 'Stopping current speech');
         await _ttsService.stop();
         emit(currentState.copyWith(isSpeaking: false));
       } catch (e) {
+        Logger.error(LogTags.voiceBloc, 'Failed to stop speaking', error: e);
         emit(VoiceError('Failed to stop speaking: $e'));
       }
     }
@@ -214,6 +244,13 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final currentState = state as VoiceReady;
 
       try {
+        Logger.info(LogTags.voiceBloc, 'Updating voice settings', data: {
+          'language': event.language,
+          'speechRate': event.speechRate,
+          'volume': event.volume,
+          'pitch': event.pitch,
+        });
+
         // Update TTS settings
         await _ttsService.updateSettings(
           language: event.language,
@@ -236,6 +273,8 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
           pitch: settings['pitch'],
         ));
       } catch (e) {
+        Logger.error(LogTags.voiceBloc, 'Failed to update voice settings',
+            error: e);
         emit(VoiceError('Failed to update voice settings: $e'));
       }
     }
@@ -246,6 +285,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
     LoadVoiceSettings event,
     Emitter<VoiceState> emit,
   ) async {
+    Logger.debug(LogTags.voiceBloc, 'Loading voice settings from storage');
     await _loadSettings();
   }
 
@@ -256,6 +296,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
   ) async {
     if (state is VoiceReady) {
       final currentState = state as VoiceReady;
+      Logger.debug(LogTags.voiceBloc, 'Saving voice settings to storage');
       final settings = _ttsService.getCurrentSettings();
       await _saveSettings(settings);
     }
@@ -291,6 +332,8 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       userMessage = 'Voice recognition failed: ${event.error}';
     }
 
+    Logger.warning(
+        LogTags.voiceBloc, 'Voice recognition error: ${event.error}');
     emit(VoiceError(userMessage));
   }
 
@@ -317,6 +360,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       userMessage = 'Text-to-speech failed: ${event.error}';
     }
 
+    Logger.warning(LogTags.voiceBloc, 'TTS error: ${event.error}');
     emit(VoiceError(userMessage));
   }
 
@@ -325,6 +369,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
     RetryVoiceInitialization event,
     Emitter<VoiceState> emit,
   ) async {
+    Logger.info(LogTags.voiceBloc, 'Retrying voice initialization');
     // Re-run the initialization process
     await _onInitializeVoiceServices(
       const InitializeVoiceServices(),
@@ -354,7 +399,8 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
         pitch: pitch,
       );
     } catch (e) {
-      print('Failed to load voice settings: $e');
+      Logger.error(LogTags.voiceBloc, 'Failed to load voice settings',
+          error: e);
     }
   }
 
@@ -367,7 +413,8 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       await StorageService.saveSetting(_voiceVolumeKey, settings['volume']);
       await StorageService.saveSetting(_voicePitchKey, settings['pitch']);
     } catch (e) {
-      print('Failed to save voice settings: $e');
+      Logger.error(LogTags.voiceBloc, 'Failed to save voice settings',
+          error: e);
     }
   }
 

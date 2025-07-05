@@ -66,7 +66,8 @@ class LoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Color.fromARGB(
+                77, 99, 102, 241), // AppConstants.primaryColor with 0.3 opacity
             child: LoadingIndicator(
               message: message,
             ),

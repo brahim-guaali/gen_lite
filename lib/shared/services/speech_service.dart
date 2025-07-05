@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'package:genlite/shared/utils/logger.dart';
 
 /// Service for handling speech recognition functionality
 class SpeechService {
@@ -13,21 +14,26 @@ class SpeechService {
 
   /// Initialize the speech recognition service
   Future<bool> initialize() async {
+    if (_isInitialized) return true;
+
     try {
-      _isInitialized = await _speechToText.initialize(
+      final available = await _speechToText.initialize(
         onError: (error) {
-          print('Speech recognition error: ${error.errorMsg}');
+          Logger.error(LogTags.speechService,
+              'Speech recognition error: ${error.errorMsg}');
         },
         onStatus: (status) {
-          print('Speech recognition status: $status');
-          if (status == 'done' || status == 'notListening') {
-            _isListening = false;
-          }
+          Logger.debug(
+              LogTags.speechService, 'Speech recognition status: $status');
         },
       );
-      return _isInitialized;
+
+      _isInitialized = available;
+      return available;
     } catch (e) {
-      print('Failed to initialize speech recognition: $e');
+      Logger.error(
+          LogTags.speechService, 'Failed to initialize speech recognition',
+          error: e);
       return false;
     }
   }
@@ -67,7 +73,9 @@ class SpeechService {
       );
     } catch (e) {
       _isListening = false;
-      onError('Failed to start listening: $e');
+      Logger.error(LogTags.speechService, 'Failed to start listening',
+          error: e);
+      onError(e.toString());
     }
   }
 
@@ -104,9 +112,7 @@ class SpeechService {
   /// Dispose of resources
   void dispose() {
     if (_isListening) {
-      _speechToText.stop();
+      stopListening();
     }
-    _isListening = false;
-    _isInitialized = false;
   }
 }

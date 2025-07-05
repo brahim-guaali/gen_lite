@@ -4,6 +4,7 @@ import 'package:flutter_gemma/core/chat.dart';
 import 'package:genlite/shared/models/message.dart';
 import 'package:genlite/shared/services/llm_service.dart';
 import 'package:genlite/shared/services/chat_service.dart';
+import 'package:genlite/shared/utils/logger.dart';
 import '../../settings/models/agent_model.dart';
 import 'chat_events.dart';
 import 'chat_states.dart';
@@ -33,7 +34,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   // Method to set the active agent from outside the bloc
   void setActiveAgent(AgentModel? agent) {
     _chatService.setActiveAgent(agent);
-    print('[ChatBloc] Active agent set to: ${agent?.name ?? 'None'}');
+    Logger.info(
+        LogTags.chatBloc, 'Active agent set to: ${agent?.name ?? 'None'}');
   }
 
   void _onLoadConversations(
@@ -92,7 +94,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         return;
       }
 
-      print('[ChatBloc] Starting to process message: "${event.content}"');
+      Logger.debug(
+          LogTags.chatBloc, 'Starting to process message: "${event.content}"');
 
       // Add user message and empty AI message to conversation via service
       final updatedConversation = await _chatService.sendMessage(
@@ -104,51 +107,53 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       final updatedData = _chatService.getCurrentData();
 
       // Emit processing state with empty AI message
-      print('[ChatBloc] Emitting processing state with streaming message...');
+      Logger.debug(
+          LogTags.chatBloc, 'Emitting processing state with streaming message');
       emit(ChatLoaded(
         currentConversation: updatedConversation,
         conversations: updatedData.conversations,
         isProcessing: true,
       ));
 
-      print('[ChatBloc] Checking if LLM service is ready...');
+      Logger.debug(LogTags.chatBloc, 'Checking if LLM service is ready');
       // Ensure LLM service is ready
       if (!_llmService.isReady) {
-        print('[ChatBloc] LLM service not ready, initializing...');
+        Logger.info(LogTags.chatBloc, 'LLM service not ready, initializing');
         await _llmService.initialize();
-        print('[ChatBloc] LLM service initialization completed');
+        Logger.info(LogTags.chatBloc, 'LLM service initialization completed');
       } else {
-        print('[ChatBloc] LLM service is already ready');
+        Logger.debug(LogTags.chatBloc, 'LLM service is already ready');
       }
 
       // Create or get chat session
-      print('[ChatBloc] Creating/getting chat session...');
+      Logger.debug(LogTags.chatBloc, 'Creating/getting chat session');
       if (_currentChat == null) {
         _currentChat = await _llmService.createChat();
         if (_currentChat == null) {
           throw Exception('Failed to create chat session');
         }
-        print('[ChatBloc] New chat session created');
+        Logger.info(LogTags.chatBloc, 'New chat session created');
       } else {
-        print('[ChatBloc] Using existing chat session');
+        Logger.debug(LogTags.chatBloc, 'Using existing chat session');
       }
 
       // Get active agent from service
       final activeAgent = _chatService.activeAgent;
-      print('[ChatBloc] Active agent: ${activeAgent?.name ?? 'None'}');
+      Logger.debug(
+          LogTags.chatBloc, 'Active agent: ${activeAgent?.name ?? 'None'}');
 
       // Prepare the message with agent context if available
       String messageToSend = event.content;
       if (activeAgent != null && activeAgent.systemPrompt.isNotEmpty) {
         // Prepend the agent's system prompt to provide context
         messageToSend = '${activeAgent.systemPrompt}\n\nUser: $event.content';
-        print(
-            '[ChatBloc] Using agent "${activeAgent.name}" with system prompt');
+        Logger.info(LogTags.chatBloc,
+            'Using agent "${activeAgent.name}" with system prompt');
       }
 
       // Process message with AI using streaming
-      print(
-          '[ChatBloc] Calling LLM service to process message with streaming...');
+      Logger.debug(LogTags.chatBloc,
+          'Calling LLM service to process message with streaming');
       final aiResponse = await _llmService.processMessage(
         messageToSend,
         chat: _currentChat,
@@ -158,8 +163,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         },
       );
 
-      print(
-          '[ChatBloc] LLM service response completed: ${aiResponse?.substring(0, aiResponse.length > 100 ? 100 : aiResponse.length)}...');
+      Logger.debug(LogTags.chatBloc,
+          'LLM service response completed: ${aiResponse?.substring(0, aiResponse.length > 100 ? 100 : aiResponse.length)}...');
 
       if (aiResponse == null || aiResponse.isEmpty) {
         throw Exception('Failed to get AI response');
@@ -174,14 +179,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       // Get final data from service
       final finalData = _chatService.getCurrentData();
 
-      print('[ChatBloc] Emitting final state with completed AI response...');
+      Logger.info(
+          LogTags.chatBloc, 'Emitting final state with completed AI response');
       emit(ChatLoaded(
         currentConversation: finalConversation,
         conversations: finalData.conversations,
         isProcessing: false,
       ));
     } catch (e) {
-      print('[ChatBloc] Error processing message: $e');
+      Logger.error(LogTags.chatBloc, 'Error processing message', error: e);
 
       // Get current data for error handling
       final currentData = _chatService.getCurrentData();
@@ -202,7 +208,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
           ],
         );
 
-        print('[ChatBloc] Emitting error state...');
+        Logger.warning(LogTags.chatBloc, 'Emitting error state');
         emit(ChatLoaded(
           currentConversation: finalConversation,
           conversations: currentData.conversations,
@@ -241,7 +247,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         isProcessing: true, // Keep processing until complete
       ));
     } catch (e) {
-      print('[ChatBloc] Error updating streaming message: $e');
+      Logger.error(LogTags.chatBloc, 'Error updating streaming message',
+          error: e);
     }
   }
 

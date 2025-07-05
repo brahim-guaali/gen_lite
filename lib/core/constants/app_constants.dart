@@ -70,4 +70,11 @@ class AppConstants {
   static const String modelKey = 'selected_model';
   static const String temperatureKey = 'temperature';
   static const String maxTokensKey = 'max_tokens';
+
+  // New color constants
+  static const Color onSurfaceColor = Color(0xFF1E293B); // Used for onSurface
+  static const Color textColor = Color(0xFF1E293B); // Main text color
+  static const Color secondaryTextColor = Color(0xFF475569);
+  static const Color tertiaryTextColor = Color(0xFF64748B);
+  static const Color quaternaryTextColor = Color(0xFF94A3B8);
 }
