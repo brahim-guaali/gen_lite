@@ -32,6 +32,7 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
     on<SaveVoiceSettings>(_onSaveVoiceSettings);
     on<VoiceRecognitionError>(_onVoiceRecognitionError);
     on<TTSError>(_onTTSError);
+    on<RetryVoiceInitialization>(_onRetryVoiceInitialization);
   }
 
   /// Initialize voice services
@@ -121,17 +122,22 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
     if (state is VoiceReady) {
       final currentState = state as VoiceReady;
 
-      // Stop listening
-      await _speechService.stopListening();
+      try {
+        // Stop listening
+        await _speechService.stopListening();
 
-      // Emit processing state
-      emit(const VoiceProcessing());
+        // Emit processing state
+        emit(const VoiceProcessing());
 
-      // Return to ready state with updated listening status
-      emit(currentState.copyWith(isListening: false));
+        // Return to ready state with updated listening status
+        emit(currentState.copyWith(isListening: false));
 
-      // Here you would typically send the text to the chat BLoC
-      // This will be handled by the UI layer
+        // Here you would typically send the text to the chat BLoC
+        // This will be handled by the UI layer
+      } catch (e) {
+        emit(VoiceError('Failed to process voice input: $e'));
+        emit(currentState.copyWith(isListening: false));
+      }
     }
   }
 
@@ -262,9 +268,30 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
   ) async {
     if (state is VoiceReady) {
       final currentState = state as VoiceReady;
-      emit(currentState.copyWith(isListening: false));
+
+      // Stop listening and return to ready state
+      try {
+        await _speechService.stopListening();
+        emit(currentState.copyWith(isListening: false));
+      } catch (e) {
+        // If stopping fails, still emit the error
+      }
     }
-    emit(VoiceError('Voice recognition error: ${event.error}'));
+
+    // Provide user-friendly error messages
+    String userMessage;
+    if (event.error.contains('permission')) {
+      userMessage =
+          'Microphone permission denied. Please enable microphone access in settings.';
+    } else if (event.error.contains('network')) {
+      userMessage = 'Network error. Please check your internet connection.';
+    } else if (event.error.contains('timeout')) {
+      userMessage = 'Voice recognition timed out. Please try again.';
+    } else {
+      userMessage = 'Voice recognition failed: ${event.error}';
+    }
+
+    emit(VoiceError(userMessage));
   }
 
   /// Handle TTS errors
@@ -276,7 +303,33 @@ class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
       final currentState = state as VoiceReady;
       emit(currentState.copyWith(isSpeaking: false));
     }
-    emit(VoiceError('TTS error: ${event.error}'));
+
+    // Provide user-friendly error messages
+    String userMessage;
+    if (event.error.contains('language')) {
+      userMessage =
+          'Language not supported. Please select a different language.';
+    } else if (event.error.contains('volume')) {
+      userMessage = 'Volume setting error. Please adjust volume in settings.';
+    } else if (event.error.contains('network')) {
+      userMessage = 'Network error. Please check your internet connection.';
+    } else {
+      userMessage = 'Text-to-speech failed: ${event.error}';
+    }
+
+    emit(VoiceError(userMessage));
+  }
+
+  /// Retry voice initialization
+  Future<void> _onRetryVoiceInitialization(
+    RetryVoiceInitialization event,
+    Emitter<VoiceState> emit,
+  ) async {
+    // Re-run the initialization process
+    await _onInitializeVoiceServices(
+      const InitializeVoiceServices(),
+      emit,
+    );
   }
 
   /// Load settings from storage

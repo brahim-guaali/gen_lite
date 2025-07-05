@@ -105,3 +105,8 @@ class TTSError extends VoiceEvent {
   @override
   List<Object?> get props => [error];
 }
+
+/// Event to retry voice initialization
+class RetryVoiceInitialization extends VoiceEvent {
+  const RetryVoiceInitialization();
+}
