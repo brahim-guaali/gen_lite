@@ -11,9 +11,12 @@ class SettingsHomeScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
+        // Material 3 style is used if your theme supports it
       ),
       body: ListView(
         children: [
+          const SizedBox(height: 24),
+          // Section: Agents
           ListTile(
             leading: const Icon(Icons.smart_toy),
             title: const Text('Agents'),
@@ -29,6 +32,7 @@ class SettingsHomeScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+          // Section: Voice
           ListTile(
             leading: const Icon(Icons.record_voice_over),
             title: const Text('Voice'),
@@ -44,6 +48,7 @@ class SettingsHomeScreen extends StatelessWidget {
             },
           ),
           const Divider(),
+          // Section: About
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('About'),
@@ -58,6 +63,8 @@ class SettingsHomeScreen extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 24),
+          // TODO: Add localization support for all strings
         ],
       ),
     );
