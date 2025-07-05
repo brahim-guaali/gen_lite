@@ -7,10 +7,14 @@ import '../../../shared/models/message.dart';
 import '../../../shared/widgets/message_bubble.dart';
 import '../../../shared/widgets/loading_indicator.dart';
 import '../../../shared/widgets/ui_components.dart';
+import '../../../shared/widgets/voice_components.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../settings/bloc/agent_bloc.dart';
 import '../../settings/bloc/agent_events.dart';
 import '../../settings/bloc/agent_states.dart';
+import '../../voice/bloc/voice_bloc.dart';
+import '../../voice/bloc/voice_event.dart';
+import '../../voice/bloc/voice_state.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -147,163 +151,196 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: BlocConsumer<ChatBloc, ChatState>(
-              listener: (context, state) {
-                if (state is ChatLoaded) {
-                  WidgetsBinding.instance
-                      .addPostFrameCallback((_) => _scrollToBottom());
-                }
-              },
-              builder: (context, state) {
-                if (state is ChatInitial) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.paddingLarge),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          AppIcon(
-                            icon: Icons.chat_bubble_outline,
-                            size: 80,
-                            color: AppConstants.primaryColor.withOpacity(0.5),
-                          ),
-                          AppSpacing.lg,
-                          Text(
-                            'Welcome to GenLite',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineLarge
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppConstants.primaryColor,
-                                ),
-                          ),
-                          AppSpacing.md,
-                          Text(
-                            'Your offline AI assistant is ready to help.\nStart your first conversation.',
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.7),
-                                    ),
-                            textAlign: TextAlign.center,
-                          ),
-                          AppSpacing.xl,
-                          PrimaryButton(
-                            text: 'Start New Conversation',
-                            icon: Icons.add,
-                            onPressed: () {
-                              context.read<ChatBloc>().add(
-                                    const CreateNewConversation(
-                                        title: 'New Conversation'),
-                                  );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
+      body: MultiBlocListener(
+        listeners: [
+          BlocListener<VoiceBloc, VoiceState>(
+            listener: (context, voiceState) {
+              if (voiceState is VoiceReady && voiceState.isListening) {
+                // Voice input is active, could show a snackbar or other feedback
+              }
+            },
+          ),
+          BlocListener<ChatBloc, ChatState>(
+            listener: (context, chatState) {
+              if (chatState is ChatLoaded &&
+                  chatState.currentConversation.messages.isNotEmpty) {
+                final lastMessage = chatState.currentConversation.messages.last;
+                final voiceState = context.read<VoiceBloc>().state;
 
-                if (state is ChatLoading) {
+                // Auto-speak AI responses when voice output is enabled
+                if (lastMessage.role == MessageRole.assistant &&
+                    voiceState is VoiceReady &&
+                    voiceState.voiceOutputEnabled) {
+                  context.read<VoiceBloc>().add(SpeakText(lastMessage.content));
+                }
+              }
+            },
+          ),
+        ],
+        child: Column(
+          children: [
+            Expanded(
+              child: BlocConsumer<ChatBloc, ChatState>(
+                listener: (context, state) {
+                  if (state is ChatLoaded) {
+                    WidgetsBinding.instance
+                        .addPostFrameCallback((_) => _scrollToBottom());
+                  }
+                },
+                builder: (context, state) {
+                  if (state is ChatInitial) {
+                    return Center(
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.all(AppConstants.paddingLarge),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            AppIcon(
+                              icon: Icons.chat_bubble_outline,
+                              size: 80,
+                              color: AppConstants.primaryColor.withOpacity(0.5),
+                            ),
+                            AppSpacing.lg,
+                            Text(
+                              'Welcome to GenLite',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppConstants.primaryColor,
+                                  ),
+                            ),
+                            AppSpacing.md,
+                            Text(
+                              'Your offline AI assistant is ready to help.\nStart your first conversation.',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.7),
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                            AppSpacing.xl,
+                            PrimaryButton(
+                              text: 'Start New Conversation',
+                              icon: Icons.add,
+                              onPressed: () {
+                                context.read<ChatBloc>().add(
+                                      const CreateNewConversation(
+                                          title: 'New Conversation'),
+                                    );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (state is ChatLoading) {
+                    return const Center(
+                      child: LoadingIndicator(),
+                    );
+                  }
+
+                  if (state is ChatError) {
+                    return Center(
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.all(AppConstants.paddingLarge),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const AppIcon(
+                              icon: Icons.error_outline,
+                              size: 64,
+                              color: AppConstants.errorColor,
+                            ),
+                            AppSpacing.md,
+                            Text(
+                              'Error',
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .headlineMedium
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppConstants.errorColor,
+                                  ),
+                            ),
+                            AppSpacing.sm,
+                            Text(
+                              state.message,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyLarge
+                                  ?.copyWith(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withOpacity(0.7),
+                                  ),
+                              textAlign: TextAlign.center,
+                            ),
+                            AppSpacing.lg,
+                            PrimaryButton(
+                              text: 'Start New Conversation',
+                              icon: Icons.add,
+                              onPressed: () {
+                                context.read<ChatBloc>().add(
+                                      const CreateNewConversation(
+                                          title: 'New Conversation'),
+                                    );
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (state is ChatLoaded) {
+                    final messages = state.currentConversation.messages;
+
+                    if (messages.isEmpty) {
+                      return _buildWelcomeMessage();
+                    }
+
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(AppConstants.paddingMedium),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+
+                        // Check if this is the last message and it's an assistant message being streamed
+                        final isLastMessage = index == messages.length - 1;
+                        final isStreamingAssistant = isLastMessage &&
+                            message.role == MessageRole.assistant &&
+                            state.isProcessing;
+
+                        return MessageBubble(
+                          message: message,
+                          isStreaming: isStreamingAssistant,
+                        );
+                      },
+                    );
+                  }
+
                   return const Center(
                     child: LoadingIndicator(),
                   );
-                }
-
-                if (state is ChatError) {
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstants.paddingLarge),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const AppIcon(
-                            icon: Icons.error_outline,
-                            size: 64,
-                            color: AppConstants.errorColor,
-                          ),
-                          AppSpacing.md,
-                          Text(
-                            'Error',
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineMedium
-                                ?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppConstants.errorColor,
-                                ),
-                          ),
-                          AppSpacing.sm,
-                          Text(
-                            state.message,
-                            style:
-                                Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface
-                                          .withOpacity(0.7),
-                                    ),
-                            textAlign: TextAlign.center,
-                          ),
-                          AppSpacing.lg,
-                          PrimaryButton(
-                            text: 'Start New Conversation',
-                            icon: Icons.add,
-                            onPressed: () {
-                              context.read<ChatBloc>().add(
-                                    const CreateNewConversation(
-                                        title: 'New Conversation'),
-                                  );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                }
-
-                if (state is ChatLoaded) {
-                  final messages = state.currentConversation.messages;
-
-                  if (messages.isEmpty) {
-                    return _buildWelcomeMessage();
-                  }
-
-                  return ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(AppConstants.paddingMedium),
-                    itemCount: messages.length,
-                    itemBuilder: (context, index) {
-                      final message = messages[index];
-
-                      // Check if this is the last message and it's an assistant message being streamed
-                      final isLastMessage = index == messages.length - 1;
-                      final isStreamingAssistant = isLastMessage &&
-                          message.role == MessageRole.assistant &&
-                          state.isProcessing;
-
-                      return MessageBubble(
-                        message: message,
-                        isStreaming: isStreamingAssistant,
-                      );
-                    },
-                  );
-                }
-
-                return const Center(
-                  child: LoadingIndicator(),
-                );
-              },
+                },
+              ),
             ),
-          ),
-          _buildMessageInput(),
-        ],
+            _buildMessageInput(),
+          ],
+        ),
       ),
     );
   }
@@ -384,6 +421,22 @@ class _ChatScreenState extends State<ChatScreen> {
       child: SafeArea(
         child: Row(
           children: [
+            // Voice input button
+            BlocListener<VoiceBloc, VoiceState>(
+              listener: (context, voiceState) {
+                if (voiceState is VoiceReady && voiceState.isListening) {
+                  // Handle voice input received
+                  // This will be handled by the VoiceBloc
+                }
+              },
+              child: VoiceInputButton(
+                onVoiceInput: (text) {
+                  _messageController.text = text;
+                  _handleSubmitted(text);
+                },
+              ),
+            ),
+            const SizedBox(width: AppConstants.paddingSmall),
             Expanded(
               child: TextField(
                 controller: _messageController,
@@ -394,7 +447,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
                 onSubmitted: _isComposing ? _handleSubmitted : null,
                 decoration: InputDecoration(
-                  hintText: 'Type your message...',
+                  hintText: 'Type a message or tap the mic...',
                   border: OutlineInputBorder(
                     borderRadius:
                         BorderRadius.circular(AppConstants.borderRadiusMedium),
