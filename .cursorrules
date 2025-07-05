@@ -35,6 +35,35 @@ This is a Flutter app called GenLite - an offline AI assistant that uses the Gem
 - Use `AppCard`, `PrimaryButton`, `SecondaryButton` from shared widgets
 - Follow Material 3 design principles
 
+### Widget Extraction Pattern
+- Extract widgets to separate files when they exceed 50 lines or have complex logic
+- Organize by feature: `lib/features/{feature}/widgets/`
+- Keep main screen files focused on screen logic and state management
+- Use descriptive widget names: `ChatWelcomeMessage`, `VoiceStatusIndicator`
+- Follow feature prefix: `Chat*`, `File*`, `Settings*`
+- One widget per file, use snake_case for file names
+- Handle import conflicts with `hide` or `as` keywords
+
+#### Widget Extraction Guidelines:
+```dart
+// Extract when:
+// - Widget is 50+ lines
+// - Widget has complex logic  
+// - Widget could be reused elsewhere
+// - Main screen file is 300+ lines
+
+// File structure:
+lib/features/chat/
+├── presentation/
+│   └── chat_screen.dart          # Clean and focused
+└── widgets/                      # Extracted widgets
+    ├── chat_welcome_message.dart
+    ├── chat_error_message.dart
+    ├── chat_message_list.dart
+    ├── chat_input_bar.dart
+    └── voice_status_indicator.dart
+```
+
 ### Services
 - Use static methods for utility services
 - Include proper error handling with try-catch blocks
