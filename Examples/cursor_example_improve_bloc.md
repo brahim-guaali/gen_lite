@@ -7,7 +7,6 @@ what do thing about this pattern in bloc handlers
 if (state is! ChatLoaded) return;
 
 
-
 ---
 
 **Cursor**
