@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/theme/app_theme.dart';
 import 'features/app_initialization/bloc/app_initialization_bloc.dart';
 import 'features/app_initialization/bloc/app_initialization_event.dart';
-import 'features/app_initialization/presentation/app_router.dart';
+import 'app_router.dart';
 import 'shared/services/storage_service.dart';
 import 'features/chat/bloc/chat_bloc.dart';
 import 'features/file_management/bloc/file_bloc.dart';
