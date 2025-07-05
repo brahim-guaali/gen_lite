@@ -17,6 +17,7 @@ GenLite follows Clean Architecture principles with clear separation of concerns:
 │                    Presentation Layer                       │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
 │  │   Chat UI   │  │  File UI    │  │ Settings UI │        │
+│  │  + Voice    │  │             │  │  + Voice    │        │
 │  └─────────────┘  └─────────────┘  └─────────────┘        │
 └─────────────────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────────────────┐
@@ -24,12 +25,18 @@ GenLite follows Clean Architecture principles with clear separation of concerns:
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
 │  │  Chat BLoC  │  │ File BLoC   │  │ Agent BLoC  │        │
 │  └─────────────┘  └─────────────┘  └─────────────┘        │
+│  ┌─────────────┐                                          │
+│  │ Voice BLoC  │                                          │
+│  └─────────────┘                                          │
 └─────────────────────────────────────────────────────────────┘
 ┌─────────────────────────────────────────────────────────────┐
 │                      Data Layer                             │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
 │  │ LLM Service │  │File Service │  │Storage Svc  │        │
 │  └─────────────┘  └─────────────┘  └─────────────┘        │
+│  ┌─────────────┐  ┌─────────────┐                        │
+│  │Speech Svc   │  │ TTS Service │                        │
+│  └─────────────┘  └─────────────┘                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -44,11 +51,15 @@ lib/
 │   ├── chat/              # Chat feature module
 │   ├── file_management/   # File management module
 │   ├── onboarding/        # Onboarding feature
-│   └── settings/          # Settings and agents
+│   ├── settings/          # Settings and agents
+│   └── voice/             # Voice input/output feature
 └── shared/
     ├── models/            # Data models
     ├── services/          # Business logic services
+    │   ├── speech_service.dart    # Speech recognition
+    │   └── tts_service.dart       # Text-to-speech
     └── widgets/           # Unified UI components
+        └── voice_components.dart  # Voice UI components
 ```
 
 ---
@@ -160,6 +171,20 @@ Check State → Resume/Start Download → Progress Updates → Completion
 LocalStorage   HTTP Range Requests    UI Updates    Model Initialization
 ```
 
+### 3.4 Voice Input Flow
+```
+User Tap Mic → Start Listening → Speech Recognition → Text Processing → Send Message
+     ↓              ↓                    ↓                ↓              ↓
+Voice BLoC    Speech Service      Device API        Voice BLoC    Chat BLoC
+```
+
+### 3.5 Voice Output Flow
+```
+AI Response → Check Voice Output → Text-to-Speech → Audio Playback
+     ↓              ↓                    ↓              ↓
+Chat BLoC     Voice BLoC         TTS Service    Device Audio
+```
+
 ---
 
 ## 4. Component Architecture
@@ -168,11 +193,14 @@ LocalStorage   HTTP Range Requests    UI Updates    Model Initialization
 **Responsibility**: UI components and user interaction
 
 **Components**:
-- **Chat Screen**: Message display and input
+- **Chat Screen**: Message display and input with voice integration
 - **File Management Screen**: File upload and management
-- **Settings Screen**: App configuration and agents
+- **Settings Screen**: App configuration, agents, and voice settings
 - **Download Screen**: Model download with progress
-- **Unified UI Components**: Reusable design system
+- **Unified UI Components**: Reusable design system including voice components
+  - **VoiceInputButton**: Microphone button for speech input
+  - **VoiceOutputToggle**: Switch for enabling/disabling voice output
+  - **VoiceSettingsPanel**: Configuration panel for voice settings
 
 ### 4.2 Business Logic Layer
 **Responsibility**: State management and business rules
@@ -181,6 +209,7 @@ LocalStorage   HTTP Range Requests    UI Updates    Model Initialization
 - **Chat BLoC**: Message handling and conversation management
 - **File BLoC**: File upload, processing, and management
 - **Agent BLoC**: AI agent creation and configuration
+- **Voice BLoC**: Speech recognition and text-to-speech state management
 - **Download State**: Download progress and state management
 
 ### 4.3 Data Layer
@@ -191,6 +220,8 @@ LocalStorage   HTTP Range Requests    UI Updates    Model Initialization
 - **File Processing Service**: Document analysis
 - **Storage Service**: Local data persistence
 - **Enhanced Model Downloader**: Smart download management
+- **Speech Service**: Device-native speech recognition
+- **TTS Service**: Device-native text-to-speech
 
 ---
 
@@ -198,6 +229,9 @@ LocalStorage   HTTP Range Requests    UI Updates    Model Initialization
 
 ### 5.1 Data Protection
 - **Local Processing**: No data transmission to external servers
+- **Voice Data**: All speech recognition and TTS processing happens locally
+- **No Cloud Storage**: Voice recordings are not stored or transmitted
+- **Device Permissions**: Minimal required permissions for microphone access
 - **Encrypted Storage**: Local data encrypted at rest
 - **Token Security**: Secure API token handling
 - **Model Security**: Verified model sources and integrity checks

@@ -227,7 +227,7 @@ void main() {
       bool foundOverlayContainer = false;
       for (final element in containers.evaluate()) {
         final container = element.widget as Container;
-        if (container.color == Colors.black.withOpacity(0.3)) {
+        if (container.color == Colors.black.withValues(alpha: 0.3)) {
           foundOverlayContainer = true;
           break;
         }

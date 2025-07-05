@@ -156,10 +156,15 @@ GenLite follows Clean Architecture principles with a focus on privacy and perfor
 - **Persistent Settings**: Agent preferences saved locally
 
 ### Settings
-- **Agent Management**: Create, edit, and delete AI agents
+- **Settings Hub**: Entry point for all app configuration and info
+- **Agents**: Manage, create, and switch AI agents (opens Agent Management screen)
+- **Voice**: Configure voice input/output, language, and TTS (opens Voice Settings screen)
+- **About**: App info, version, licenses, and privacy (opens About screen)
 - **Download Management**: Resume interrupted downloads
 - **Privacy Controls**: All data stays on your device
 - **App Preferences**: Customize your experience
+
+_Navigate to Settings from the bottom navigation bar. Tap an option to open its dedicated screen. Use the back button to return to the Settings hub._
 
 ## 🔧 Development
 

@@ -107,7 +107,7 @@ class _MessageBubbleState extends State<MessageBubble>
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Colors.black.withValues(alpha: 0.1),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -122,7 +122,7 @@ class _MessageBubbleState extends State<MessageBubble>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                     )
                   else
@@ -131,8 +131,8 @@ class _MessageBubbleState extends State<MessageBubble>
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color:
-                            theme.textTheme.bodySmall?.color?.withOpacity(0.7),
+                        color: theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.7),
                       ),
                     ),
                   const SizedBox(height: AppConstants.paddingSmall),
@@ -180,7 +180,7 @@ class _MessageBubbleState extends State<MessageBubble>
                                     height: 4,
                                     decoration: BoxDecoration(
                                       color: theme.textTheme.bodySmall?.color
-                                          ?.withOpacity(0.5),
+                                          ?.withValues(alpha: 0.5),
                                       shape: BoxShape.circle,
                                     ),
                                   ),
@@ -190,8 +190,9 @@ class _MessageBubbleState extends State<MessageBubble>
                                     height: 4,
                                     decoration: BoxDecoration(
                                       color: theme.textTheme.bodySmall?.color
-                                          ?.withOpacity(
-                                        _typingAnimation.value * 0.5 + 0.3,
+                                          ?.withValues(
+                                        alpha:
+                                            _typingAnimation.value * 0.5 + 0.3,
                                       ),
                                       shape: BoxShape.circle,
                                     ),
@@ -202,8 +203,9 @@ class _MessageBubbleState extends State<MessageBubble>
                                     height: 4,
                                     decoration: BoxDecoration(
                                       color: theme.textTheme.bodySmall?.color
-                                          ?.withOpacity(
-                                        _typingAnimation.value * 0.5 + 0.3,
+                                          ?.withValues(
+                                        alpha:
+                                            _typingAnimation.value * 0.5 + 0.3,
                                       ),
                                       shape: BoxShape.circle,
                                     ),
@@ -221,8 +223,9 @@ class _MessageBubbleState extends State<MessageBubble>
                     style: TextStyle(
                       fontSize: 11,
                       color: isUser
-                          ? Colors.white.withOpacity(0.6)
-                          : theme.textTheme.bodySmall?.color?.withOpacity(0.5),
+                          ? Colors.white.withValues(alpha: 0.6)
+                          : theme.textTheme.bodySmall?.color
+                              ?.withValues(alpha: 0.5),
                     ),
                   ),
                 ],

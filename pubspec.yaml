@@ -39,7 +39,7 @@ dependencies:
   equatable: ^2.0.5
   
   # File Handling
-  file_picker: ^6.1.1
+  file_picker: ^10.2.0
   path_provider: ^2.1.1
   
   # Local Storage
@@ -57,6 +57,12 @@ dependencies:
   flutter_dotenv: ^5.1.0
   http: ^1.1.0  # For model downloading from Hugging Face
   url_launcher: ^6.2.6
+  
+  # Audio Features
+  speech_to_text: ^7.1.0  # Speech recognition
+  flutter_tts: ^4.2.3     # Text-to-speech
+  record: ^6.0.0          # Audio recording (alternative)
+  audioplayers: ^6.5.0    # Audio playback
 
 dev_dependencies:
   flutter_test:

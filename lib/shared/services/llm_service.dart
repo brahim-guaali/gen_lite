@@ -8,12 +8,7 @@ import 'dart:typed_data';
 import 'package:flutter_gemma/core/model.dart';
 import 'package:flutter_gemma/core/chat.dart';
 import 'package:flutter_gemma/flutter_gemma.dart'
-    show
-        FlutterGemmaPlugin,
-        InferenceModel,
-        ModelType,
-        PreferredBackend,
-        Message;
+    show FlutterGemmaPlugin, InferenceModel, Message;
 import 'package:path_provider/path_provider.dart';
 
 class LLMService {

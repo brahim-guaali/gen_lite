@@ -43,6 +43,38 @@ flutter run
 flutter run
 ```
 
+#### Audio Feature Setup
+
+**iOS Audio Permissions** (`ios/Runner/Info.plist`):
+```xml
+<key>NSMicrophoneUsageDescription</key>
+<string>This app needs access to microphone for voice input.</string>
+<key>NSSpeechRecognitionUsageDescription</key>
+<string>This app needs speech recognition to convert voice to text.</string>
+```
+
+**Android Audio Permissions** (`android/app/src/main/AndroidManifest.xml`):
+```xml
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<uses-permission android:name="android.permission.INTERNET" />
+```
+
+**Audio Dependencies** (`pubspec.yaml`):
+```yaml
+dependencies:
+  # Speech recognition
+  speech_to_text: ^6.6.0
+  
+  # Text-to-speech
+  flutter_tts: ^3.8.5
+  
+  # Audio recording (alternative)
+  record: ^5.0.4
+  
+  # Audio playback
+  audioplayers: ^5.2.1
+```
+
 ---
 
 ## 2. Core Services Implementation
@@ -104,6 +136,74 @@ class FileProcessingService {
   Future<bool> isValidFileType(String fileType)
 }
 ```
+
+### 2.4 Speech Recognition Service
+**Location**: `lib/shared/services/speech_service.dart`
+
+**Dependencies**:
+```yaml
+speech_to_text: ^6.6.0
+```
+
+**Key Methods**:
+```dart
+class SpeechService {
+  Future<bool> initialize()
+  Future<void> startListening({
+    required Function(String text) onResult,
+    required Function() onError,
+  })
+  Future<void> stopListening()
+  Future<bool> isListening()
+  Future<List<LocaleName>> getAvailableLocales()
+}
+```
+
+**Implementation Details**:
+- Uses device-native speech recognition APIs
+- Supports multiple languages and locales
+- Real-time speech-to-text conversion
+- Error handling for recognition failures
+- Visual feedback during recording
+
+**Platform Permissions**:
+- **iOS**: `NSMicrophoneUsageDescription`, `NSSpeechRecognitionUsageDescription`
+- **Android**: `RECORD_AUDIO`, `INTERNET` permissions
+
+### 2.5 Text-to-Speech Service
+**Location**: `lib/shared/services/tts_service.dart`
+
+**Dependencies**:
+```yaml
+flutter_tts: ^3.8.5
+```
+
+**Key Methods**:
+```dart
+class TTSService {
+  Future<void> initialize()
+  Future<void> speak(String text)
+  Future<void> stop()
+  Future<bool> isSpeaking()
+  Future<void> setLanguage(String language)
+  Future<void> setSpeechRate(double rate)
+  Future<void> setVolume(double volume)
+  Future<void> setPitch(double pitch)
+}
+```
+
+**Implementation Details**:
+- Uses device-native text-to-speech engines
+- Configurable speech rate, volume, and pitch
+- Multiple language support
+- Background audio playback
+- Error handling for TTS failures
+
+**Supported Features**:
+- **Speech Rate**: 0.1 to 1.0 (slow to fast)
+- **Volume**: 0.0 to 1.0 (mute to full volume)
+- **Pitch**: 0.5 to 2.0 (low to high pitch)
+- **Languages**: Device-supported languages
 
 ---
 
@@ -215,6 +315,75 @@ class AgentError extends AgentState
 - Persists agent data locally
 - Provides pre-built agent templates
 
+### 3.4 Voice BLoC
+**Location**: `lib/features/voice/bloc/`
+
+**Events**:
+```dart
+class StartListening extends VoiceEvent
+class StopListening extends VoiceEvent
+class VoiceInputReceived extends VoiceEvent {
+  final String text;
+  const VoiceInputReceived(this.text);
+}
+class ToggleVoiceOutput extends VoiceEvent {
+  final bool enabled;
+  const ToggleVoiceOutput(this.enabled);
+}
+class SpeakText extends VoiceEvent {
+  final String text;
+  const SpeakText(this.text);
+}
+class UpdateVoiceSettings extends VoiceEvent {
+  final String language;
+  final double speechRate;
+  final double volume;
+  final double pitch;
+}
+```
+
+**States**:
+```dart
+class VoiceInitial extends VoiceState
+class VoiceListening extends VoiceState
+class VoiceProcessing extends VoiceState
+class VoiceOutputEnabled extends VoiceState {
+  final bool enabled;
+  final String language;
+  final double speechRate;
+  final double volume;
+  final double pitch;
+}
+class VoiceError extends VoiceState {
+  final String message;
+  const VoiceError(this.message);
+}
+```
+
+**Implementation**:
+- Manages speech recognition state and audio input
+- Controls text-to-speech output settings
+- Integrates with chat for voice input/output
+- Handles voice recognition errors and recovery
+- Persists voice settings locally
+
+**Integration with Chat**:
+```dart
+// Auto-speak AI responses when voice output is enabled
+BlocListener<ChatBloc, ChatState>(
+  listener: (context, state) {
+    if (state is ChatLoaded && 
+        state.currentConversation.messages.isNotEmpty &&
+        context.read<VoiceBloc>().state.voiceOutputEnabled) {
+      final lastMessage = state.currentConversation.messages.last;
+      if (lastMessage.role == MessageRole.assistant) {
+        context.read<VoiceBloc>().add(SpeakText(lastMessage.content));
+      }
+    }
+  },
+)
+```
+
 ---
 
 ## 4. UI Components Implementation
@@ -320,6 +489,173 @@ class MainScreen extends StatefulWidget {
 - **User Experience**: Seamless navigation with preserved state
 - **Memory Efficiency**: Only active tab is rendered, others are kept in memory
 - **Scroll Position**: Chat scroll position is maintained across tab switches
+
+### 4.5 Settings Hub and Navigation
+
+- The Settings screen is now a hub for all app configuration and info.
+- The main Settings screen presents a list of options:
+  1. **Agents**: Manage AI agents (opens Agent Management screen)
+  2. **Voice**: Configure voice input/output (opens Voice Settings screen)
+  3. **About**: App info, version, licenses, etc. (opens About screen)
+- Tapping an option navigates to the corresponding screen.
+- Each sub-screen has a back button to return to Settings Home.
+- Settings is the entry point for all configuration and info screens.
+
+#### Settings Integration Phase (Updated)
+- Refactor Settings to be a hub with navigation to Agents, Voice, and About screens
+- Ensure navigation and back behavior is consistent
+- Add About screen if not present
+- Update widget and integration tests for new navigation
+
+### 4.6 Voice UI Components
+**Location**: `lib/shared/widgets/voice_components.dart`
+
+**Voice Input Button**:
+```dart
+class VoiceInputButton extends StatefulWidget {
+  final Function(String text) onVoiceInput;
+  final bool isListening;
+  final VoidCallback onPressed;
+  
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<VoiceBloc, VoiceState>(
+      builder: (context, state) {
+        return IconButton(
+          icon: Icon(
+            state.isListening ? Icons.mic : Icons.mic_none,
+            color: state.isListening ? Colors.red : null,
+          ),
+          onPressed: () {
+            if (state.isListening) {
+              context.read<VoiceBloc>().add(StopListening());
+            } else {
+              context.read<VoiceBloc>().add(StartListening());
+            }
+          },
+        );
+      },
+    );
+  }
+}
+```
+
+**Voice Output Toggle**:
+```dart
+class VoiceOutputToggle extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<VoiceBloc, VoiceState>(
+      builder: (context, state) {
+        return SwitchListTile(
+          title: Text('Voice Output'),
+          subtitle: Text('Read AI responses aloud'),
+          value: state.voiceOutputEnabled,
+          onChanged: (value) {
+            context.read<VoiceBloc>().add(ToggleVoiceOutput(value));
+          },
+        );
+      },
+    );
+  }
+}
+```
+
+**Voice Settings Panel**:
+```dart
+class VoiceSettingsPanel extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<VoiceBloc, VoiceState>(
+      builder: (context, state) {
+        return Column(
+          children: [
+            ListTile(
+              title: Text('Speech Language'),
+              subtitle: Text(state.language),
+              trailing: Icon(Icons.arrow_forward_ios),
+              onTap: () => _showLanguageSelector(context),
+            ),
+            ListTile(
+              title: Text('Speech Rate'),
+              subtitle: Slider(
+                value: state.speechRate,
+                min: 0.1,
+                max: 1.0,
+                onChanged: (value) {
+                  context.read<VoiceBloc>().add(
+                    UpdateVoiceSettings(speechRate: value),
+                  );
+                },
+              ),
+            ),
+            ListTile(
+              title: Text('Volume'),
+              subtitle: Slider(
+                value: state.volume,
+                min: 0.0,
+                max: 1.0,
+                onChanged: (value) {
+                  context.read<VoiceBloc>().add(
+                    UpdateVoiceSettings(volume: value),
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+```
+
+**Integration with Chat Screen**:
+```dart
+// Updated message input with voice button
+Widget _buildMessageInput() {
+  return Container(
+    padding: const EdgeInsets.all(AppConstants.paddingMedium),
+    child: SafeArea(
+      child: Row(
+        children: [
+          // Voice input button
+          VoiceInputButton(
+            onVoiceInput: (text) {
+              _messageController.text = text;
+              _handleSubmitted(text);
+            },
+          ),
+          const SizedBox(width: 8),
+          
+          // Text input
+          Expanded(
+            child: TextField(
+              controller: _messageController,
+              onChanged: (text) {
+                setState(() {
+                  _isComposing = text.isNotEmpty;
+                });
+              },
+              onSubmitted: _isComposing ? _handleSubmitted : null,
+              decoration: InputDecoration(
+                hintText: 'Type a message or tap the mic...',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ),
+          
+          // Send button
+          IconButton(
+            icon: const Icon(Icons.send),
+            onPressed: _isComposing ? () => _handleSubmitted(_messageController.text) : null,
+          ),
+        ],
+      ),
+    ),
+  );
+}
+```
 
 ---
 
@@ -476,6 +812,28 @@ blocTest<ChatBloc, ChatState>(
     isA<ChatLoaded>(), // From LoadConversations (restored state)
   ],
 );
+
+// Voice Feature Testing
+blocTest<VoiceBloc, VoiceState>(
+  'should emit VoiceListening when StartListening is added',
+  build: () => VoiceBloc(),
+  act: (bloc) => bloc.add(StartListening()),
+  expect: () => [isA<VoiceListening>()],
+);
+
+blocTest<VoiceBloc, VoiceState>(
+  'should emit VoiceOutputEnabled when ToggleVoiceOutput is added',
+  build: () => VoiceBloc(),
+  act: (bloc) => bloc.add(const ToggleVoiceOutput(true)),
+  expect: () => [isA<VoiceOutputEnabled>()],
+);
+
+blocTest<VoiceBloc, VoiceState>(
+  'should handle voice input and emit VoiceInputReceived',
+  build: () => VoiceBloc(),
+  act: (bloc) => bloc.add(const VoiceInputReceived('Hello AI')),
+  expect: () => [isA<VoiceInputReceived>()],
+);
 ```
 
 **Service Testing**:
@@ -514,6 +872,45 @@ testWidgets('Complete chat flow', (tester) async {
   // Verify AI response
   await tester.pumpAndSettle();
   expect(find.text('AI Response'), findsOneWidget);
+});
+
+// Integration Testing
+testWidgets('Voice input button shows correct state', (tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestAppWithBloc(
+      VoiceInputButton(onVoiceInput: (text) {}),
+      [BlocProvider(create: (context) => VoiceBloc())],
+    ),
+  );
+  
+  // Initially should show mic_none icon
+  expect(find.byIcon(Icons.mic_none), findsOneWidget);
+  
+  // Tap to start listening
+  await tester.tap(find.byType(IconButton));
+  await tester.pump();
+  
+  // Should show mic icon (listening state)
+  expect(find.byIcon(Icons.mic), findsOneWidget);
+});
+
+testWidgets('Voice output toggle works correctly', (tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestAppWithBloc(
+      VoiceOutputToggle(),
+      [BlocProvider(create: (context) => VoiceBloc())],
+    ),
+  );
+  
+  // Initially should be disabled
+  expect(find.byType(Switch), findsOneWidget);
+  
+  // Tap to enable
+  await tester.tap(find.byType(Switch));
+  await tester.pump();
+  
+  // Should be enabled
+  expect(tester.widget<Switch>(find.byType(Switch)).value, true);
 });
 ```
 
@@ -651,6 +1048,114 @@ dependencies:
 - **Performance Monitoring**: Firebase Performance
 - **User Feedback**: In-app feedback system
 - **Privacy Compliance**: No user tracking
+
+---
+
+## 11. Audio Feature Implementation Roadmap
+
+### Phase 1: Core Services (Week 1)
+1. **Add Dependencies**
+   - Update `pubspec.yaml` with audio packages
+   - Run `flutter pub get`
+   - Add platform permissions
+
+2. **Create Speech Recognition Service**
+   - Implement `SpeechService` class
+   - Add initialization and permission handling
+   - Implement start/stop listening methods
+   - Add error handling and callbacks
+
+3. **Create Text-to-Speech Service**
+   - Implement `TTSService` class
+   - Add initialization and configuration
+   - Implement speak/stop methods
+   - Add settings management (rate, volume, pitch)
+
+### Phase 2: State Management (Week 2)
+1. **Create Voice BLoC**
+   - Implement `VoiceEvent` classes
+   - Implement `VoiceState` classes
+   - Create `VoiceBloc` with event handlers
+   - Add integration with speech and TTS services
+
+2. **Add Voice Settings**
+   - Implement voice settings persistence
+   - Add language selection functionality
+   - Create settings management in BLoC
+
+### Phase 3: UI Components (Week 3)
+1. **Create Voice UI Components**
+   - Implement `VoiceInputButton`
+   - Implement `VoiceOutputToggle`
+   - Create `VoiceSettingsPanel`
+   - Add visual feedback for recording state
+
+2. **Integrate with Chat Screen**
+   - Update chat message input with voice button
+   - Add auto-speak functionality for AI responses
+   - Implement voice input callback handling
+
+### Phase 4: Settings Integration (Week 4)
+1. **Add Voice Settings to Settings Screen**
+   - Create voice settings section
+   - Add language selector
+   - Add speech rate and volume controls
+   - Implement settings persistence
+
+2. **Add Voice Settings to Agent Management**
+   - Integrate voice settings with agent configuration
+   - Add agent-specific voice preferences
+
+### Phase 5: Testing and Refinement (Week 5)
+1. **Unit Testing**
+   - Test speech recognition service
+   - Test TTS service
+   - Test Voice BLoC functionality
+   - Test voice settings management
+
+2. **Widget Testing**
+   - Test voice input button
+   - Test voice output toggle
+   - Test voice settings panel
+   - Test chat integration
+
+3. **Integration Testing**
+   - Test complete voice input/output flow
+   - Test voice settings persistence
+   - Test error handling scenarios
+
+### Phase 6: Polish and Documentation (Week 6)
+1. **Error Handling**
+   - Improve error messages
+   - Add retry mechanisms
+   - Handle edge cases
+
+2. **Performance Optimization**
+   - Optimize audio processing
+   - Reduce memory usage
+   - Improve response times
+
+3. **Documentation**
+   - Update API documentation
+   - Add usage examples
+   - Create troubleshooting guide
+
+### Success Criteria
+- [ ] Voice input works reliably across devices
+- [ ] Voice output quality is acceptable
+- [ ] Settings are properly persisted
+- [ ] Error handling is robust
+- [ ] Performance impact is minimal
+- [ ] Accessibility requirements are met
+- [ ] All tests pass
+- [ ] Documentation is complete
+
+### Risk Mitigation
+- **Device Compatibility**: Test on multiple devices and OS versions
+- **Performance Impact**: Monitor memory and CPU usage
+- **User Experience**: Conduct usability testing
+- **Accessibility**: Ensure WCAG compliance
+- **Error Handling**: Comprehensive error scenarios covered
 
 ---
 

@@ -10,8 +10,13 @@ import 'features/settings/bloc/agent_bloc.dart';
 import 'features/settings/bloc/agent_events.dart';
 import 'features/settings/bloc/agent_states.dart';
 import 'features/settings/presentation/agent_management_screen.dart';
+import 'features/settings/presentation/settings_home_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
+import 'features/voice/bloc/voice_bloc.dart';
+import 'features/voice/bloc/voice_event.dart';
 import 'shared/services/storage_service.dart';
+import 'shared/services/llm_service.dart';
+import 'shared/widgets/download_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,14 +39,17 @@ class GenLiteApp extends StatefulWidget {
 
 class _GenLiteAppState extends State<GenLiteApp> {
   bool _hasCompletedOnboarding = false;
+  bool _isModelReady = false;
+  bool _isCheckingModel = true;
 
   @override
   void initState() {
     super.initState();
-    _checkOnboardingStatus();
+    _initializeApp();
   }
 
-  Future<void> _checkOnboardingStatus() async {
+  Future<void> _initializeApp() async {
+    // Check onboarding status
     final hasCompletedOnboarding =
         await StorageService.getSetting<bool>('hasCompletedOnboarding') ??
             false;
@@ -49,12 +57,46 @@ class _GenLiteAppState extends State<GenLiteApp> {
     setState(() {
       _hasCompletedOnboarding = hasCompletedOnboarding;
     });
+
+    // Check if model is ready
+    if (_hasCompletedOnboarding) {
+      await _checkModelStatus();
+    } else {
+      setState(() {
+        _isCheckingModel = false;
+      });
+    }
+  }
+
+  Future<void> _checkModelStatus() async {
+    try {
+      // Try to initialize LLM service to check if model exists
+      await LLMService().initialize();
+      setState(() {
+        _isModelReady = true;
+        _isCheckingModel = false;
+      });
+    } catch (e) {
+      // Model not found or not ready
+      setState(() {
+        _isModelReady = false;
+        _isCheckingModel = false;
+      });
+    }
   }
 
   Future<void> _completeOnboarding() async {
     await StorageService.saveSetting('hasCompletedOnboarding', true);
     setState(() {
       _hasCompletedOnboarding = true;
+    });
+    // Check model status after onboarding
+    await _checkModelStatus();
+  }
+
+  void _onModelDownloadComplete() {
+    setState(() {
+      _isModelReady = true;
     });
   }
 
@@ -66,17 +108,39 @@ class _GenLiteAppState extends State<GenLiteApp> {
         BlocProvider(create: (context) => FileBloc()),
         BlocProvider(
             create: (context) => AgentBloc()..add(LoadAgentTemplates())),
+        BlocProvider(
+          create: (context) =>
+              VoiceBloc()..add(const InitializeVoiceServices()),
+        ),
       ],
       child: MaterialApp(
         title: 'GenLite',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.lightTheme,
         darkTheme: AppTheme.darkTheme,
-        home: _hasCompletedOnboarding
-            ? const MainScreen()
-            : OnboardingScreen(onComplete: _completeOnboarding),
+        home: _buildHomeScreen(),
       ),
     );
+  }
+
+  Widget _buildHomeScreen() {
+    if (_isCheckingModel) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    if (!_hasCompletedOnboarding) {
+      return OnboardingScreen(onComplete: _completeOnboarding);
+    }
+
+    if (!_isModelReady) {
+      return DownloadScreen(onDownloadComplete: _onModelDownloadComplete);
+    }
+
+    return const MainScreen();
   }
 }
 
@@ -93,7 +157,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const ChatScreen(),
     const FileManagementScreen(),
-    const AgentManagementScreen(),
+    const SettingsHomeScreen(),
   ];
 
   @override

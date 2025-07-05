@@ -131,9 +131,26 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - [x] Accessibility features and proper contrast
 - [x] Material 3 design system implementation
 
+#### US-007: Voice Input and Output
+**As a** user  
+**I want** to interact with the AI using voice input and receive audio responses  
+**So that** I can have hands-free conversations and better accessibility
+
+**Acceptance Criteria:**
+- [ ] Voice input button in chat interface
+- [ ] Speech-to-text conversion for user messages
+- [ ] Text-to-speech for AI responses
+- [ ] Voice output toggle in settings
+- [ ] Multiple language support for speech recognition
+- [ ] Voice input language selection
+- [ ] Speech rate and volume controls
+- [ ] Error handling for speech recognition failures
+- [ ] Visual feedback during voice recording
+- [ ] Accessibility compliance for voice features
+
 ### 3.3 P2 - Nice-to-Have Features
 
-#### US-007: Conversation Management
+#### US-008: Conversation Management
 **As a** user  
 **I want** to manage my conversation history  
 **So that** I can organize and find past conversations
@@ -145,17 +162,16 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - [ ] Conversation categorization
 - [ ] Conversation sharing (local only)
 
-#### US-008: Advanced Settings
+#### US-009: Advanced Settings
 **As a** user  
 **I want** to customize the AI behavior  
 **So that** I can optimize the experience for my needs
 
 **Acceptance Criteria:**
-- [ ] AI temperature and creativity settings
-- [ ] Response length preferences
-- [ ] Model performance settings
-- [ ] Theme customization (light/dark)
-- [ ] Language preferences
+- [ ] Settings Home lists all configuration categories (Agents, Voice, About)
+- [ ] Each category opens a dedicated screen
+- [ ] Navigation is clear and consistent
+- [ ] About screen shows app version, licenses, and privacy info
 
 ---
 
@@ -181,6 +197,13 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - **File State**: Track file processing status
 - **Settings State**: Remember user preferences
 
+#### 4.1.4 Audio Processing
+- **Speech Recognition**: Convert voice input to text using device APIs
+- **Text-to-Speech**: Convert AI responses to audio output
+- **Audio Settings**: Manage voice output preferences and language settings
+- **Voice State Management**: Track recording state and audio playback status
+- **Error Handling**: Graceful handling of speech recognition and TTS errors
+
 ### 4.2 User Interface
 
 #### 4.2.1 Design System
@@ -194,6 +217,17 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - **Screen Transitions**: Smooth animations between screens
 - **Error States**: Clear error messages and recovery options
 - **Loading States**: Appropriate loading indicators
+
+#### 4.2.3 Settings Navigation Redesign (2024-07)
+
+- The Settings screen is now a hub for all app configuration and info.
+- The main Settings screen presents a list of options:
+  1. **Agents**: Manage AI agents (opens Agent Management screen)
+  2. **Voice**: Configure voice input/output (opens Voice Settings screen)
+  3. **About**: App info, version, licenses, etc. (opens About screen)
+- Tapping an option navigates to the corresponding screen.
+- Each sub-screen has a back button to return to Settings Home.
+- Settings is the entry point for all configuration and info screens.
 
 ### 4.3 Data Management
 
@@ -220,6 +254,8 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - **AI Response**: < 3 seconds for typical queries
 - **File Upload**: < 5 seconds for standard files
 - **Screen Transitions**: < 300ms
+- **Speech Recognition**: < 1 second for voice input processing
+- **Text-to-Speech**: < 500ms for audio response initiation
 
 #### 5.1.2 Resource Usage
 - **Memory**: < 100MB for typical usage
@@ -268,6 +304,10 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - **High Contrast**: Support for high contrast modes
 - **Large Text**: Support for large text sizes
 - **Touch Targets**: Adequate touch target sizes
+- **Voice Input Support**: Speech recognition for users with motor impairments
+- **Audio Output**: Text-to-speech for users with visual impairments
+- **Voice Feedback**: Audio confirmation for voice input actions
+- **Alternative Input**: Text input as fallback for voice features
 
 ---
 
@@ -290,6 +330,10 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 - **User Ratings**: App store ratings
 - **User Feedback**: User reviews and feedback
 - **Accessibility Score**: Accessibility compliance
+- **Voice Recognition Accuracy**: Speech-to-text conversion accuracy
+- **Audio Feature Usage**: Percentage of users using voice features
+- **Voice Input Success Rate**: Successful voice input conversions
+- **Audio Output Quality**: User satisfaction with TTS quality
 
 ### 6.4 Privacy Metrics
 - **Data Transmission**: Zero external data transmission
@@ -316,6 +360,16 @@ GenLite is a Flutter-based mobile application that provides conversational AI ca
 #### 7.1.3 Platform Limitations
 - **Risk**: Platform-specific limitations
 - **Mitigation**: Cross-platform testing, platform-specific optimizations
+- **Impact**: Low
+
+#### 7.1.4 Audio Feature Compatibility
+- **Risk**: Speech recognition not available on all devices
+- **Mitigation**: Graceful fallback to text input, device capability detection
+- **Impact**: Low
+
+#### 7.1.5 Audio Performance
+- **Risk**: Audio processing impacts app performance
+- **Mitigation**: Optimized audio processing, background processing
 - **Impact**: Low
 
 ### 7.2 Business Risks
@@ -359,6 +413,7 @@ GenLite represents a significant advancement in privacy-focused AI applications.
 - **Robust Architecture**: Clean architecture with comprehensive error handling
 - **Smart Downloads**: Resume functionality for large model downloads
 - **Cross-Platform**: Consistent experience across iOS and Android
+- **Accessibility Features**: Voice input/output for enhanced accessibility
 
 ### 8.2 Future Vision
 GenLite is positioned to become the leading privacy-focused AI assistant, with plans for voice capabilities, image analysis, and an extensible plugin system. The foundation built with clean architecture and unified design ensures scalability for future enhancements.
