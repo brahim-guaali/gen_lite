@@ -7,7 +7,8 @@ import '../../../shared/models/message.dart';
 import '../../../shared/widgets/message_bubble.dart';
 import '../../../shared/widgets/loading_indicator.dart';
 import '../../../shared/widgets/ui_components.dart';
-import '../../../shared/widgets/voice_components.dart';
+import '../../../shared/widgets/voice_components.dart'
+    hide VoiceStatusIndicator;
 import '../../../core/constants/app_constants.dart';
 import '../../settings/bloc/agent_bloc.dart';
 import '../../settings/bloc/agent_events.dart';
@@ -15,6 +16,11 @@ import '../../settings/bloc/agent_states.dart';
 import '../../voice/bloc/voice_bloc.dart';
 import '../../voice/bloc/voice_event.dart';
 import '../../voice/bloc/voice_state.dart';
+import '../widgets/chat_welcome_message.dart';
+import '../widgets/chat_error_message.dart';
+import '../widgets/chat_message_list.dart';
+import '../widgets/voice_status_indicator.dart';
+import '../widgets/chat_input_bar.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -102,82 +108,8 @@ class _ChatScreenState extends State<ChatScreen> {
         actions: [
           // Voice status indicator
           BlocBuilder<VoiceBloc, VoiceState>(
-            builder: (context, voiceState) {
-              if (voiceState is VoiceReady && voiceState.isListening) {
-                return Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.red.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Listening',
-                        style: TextStyle(
-                          color: Colors.red,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              if (voiceState is VoiceReady && voiceState.voiceOutputEnabled) {
-                return Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color:
-                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primary
-                          .withOpacity(0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.volume_up,
-                        size: 12,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Voice On',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.primary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }
-
-              return const SizedBox.shrink();
-            },
+            builder: (context, voiceState) =>
+                VoiceStatusIndicator(voiceState: voiceState),
           ),
           BlocBuilder<AgentBloc, AgentState>(
             builder: (context, agentState) {
@@ -290,49 +222,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   }
 
                   if (state is ChatError) {
-                    return Center(
-                      child: Padding(
-                        padding:
-                            const EdgeInsets.all(AppConstants.paddingLarge),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const AppIcon(
-                              icon: Icons.error_outline,
-                              size: 64,
-                              color: AppConstants.errorColor,
-                            ),
-                            AppSpacing.md,
-                            Text(
-                              'Error',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headlineMedium
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppConstants.errorColor,
-                                  ),
-                            ),
-                            AppSpacing.sm,
-                            Text(
-                              state.message,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodyLarge
-                                  ?.copyWith(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withOpacity(0.7),
-                                  ),
-                              textAlign: TextAlign.center,
-                            ),
-                            AppSpacing.lg,
-                            // Remove the button, just show error
-                          ],
-                        ),
-                      ),
-                    );
+                    return ChatErrorMessage(message: state.message);
                   }
 
                   if (state is ChatLoaded) {
@@ -340,27 +230,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
                     if (messages.isEmpty) {
                       // Show a welcome message, but no button
-                      return _buildWelcomeMessage();
+                      return const ChatWelcomeMessage();
                     }
 
-                    return ListView.builder(
-                      controller: _scrollController,
-                      padding: const EdgeInsets.all(AppConstants.paddingMedium),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        final message = messages[index];
-
-                        // Check if this is the last message and it's an assistant message being streamed
-                        final isLastMessage = index == messages.length - 1;
-                        final isStreamingAssistant = isLastMessage &&
-                            message.role == MessageRole.assistant &&
-                            state.isProcessing;
-
-                        return MessageBubble(
-                          message: message,
-                          isStreaming: isStreamingAssistant,
-                        );
-                      },
+                    return ChatMessageList(
+                      messages: messages,
+                      isProcessing: state.isProcessing,
+                      scrollController: _scrollController,
                     );
                   }
 
@@ -370,120 +246,21 @@ class _ChatScreenState extends State<ChatScreen> {
                 },
               ),
             ),
-            _buildMessageInput(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWelcomeMessage() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.paddingLarge),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AppIcon(
-              icon: Icons.chat_bubble_outline,
-              size: 80,
-              color: AppConstants.primaryColor.withOpacity(0.5),
-            ),
-            AppSpacing.lg,
-            Text(
-              'Welcome to GenLite',
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppConstants.primaryColor,
-                  ),
-            ),
-            AppSpacing.md,
-            Text(
-              'Your offline AI assistant is ready to help. Start chatting below.',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withOpacity(0.7),
-                  ),
-              textAlign: TextAlign.center,
-            ),
-            AppSpacing.xl,
-            // No button here
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageInput() {
-    return Container(
-      margin: const EdgeInsets.all(AppConstants.paddingMedium),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(AppConstants.borderRadiusLarge),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _messageController,
+            ChatInputBar(
+              messageController: _messageController,
+              isComposing: _isComposing,
               onChanged: (text) {
                 setState(() {
                   _isComposing = text.isNotEmpty;
                 });
               },
-              onSubmitted: _isComposing ? _handleSubmitted : null,
-              decoration: InputDecoration(
-                hintText: 'Type a message or tap the mic...',
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                disabledBorder: InputBorder.none,
-                filled: false,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 0,
-                  vertical: 0,
-                ),
-                isDense: true,
-              ),
-              style: Theme.of(context).textTheme.bodyLarge,
-              maxLines: null,
-              textCapitalization: TextCapitalization.sentences,
-            ),
-          ),
-          const SizedBox(width: 4),
-          BlocListener<VoiceBloc, VoiceState>(
-            listener: (context, voiceState) {
-              if (voiceState is VoiceReady && voiceState.isListening) {
-                // Handle voice input received
-              }
-            },
-            child: VoiceInputButton(
-              onVoiceInput: (text) {
-                _messageController.text = text;
-                _handleSubmitted(text);
+              onSubmitted: _handleSubmitted,
+              onAttach: () {
+                // TODO: Implement file upload
               },
             ),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.attach_file),
-            onPressed: () {
-              // TODO: Implement file upload
-            },
-            tooltip: 'Attach file',
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            icon: const Icon(Icons.send),
-            onPressed: _isComposing
-                ? () => _handleSubmitted(_messageController.text)
-                : null,
-            tooltip: 'Send message',
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

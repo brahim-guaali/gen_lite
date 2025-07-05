@@ -527,6 +527,199 @@ void main() {
 | **Maintainability** | Hard to debug | Clear data flow |
 | **Performance** | Multiple state checks | Direct data access |
 
+## 🧩 **Widget Extraction Patterns**
+
+### **The Problem: Large Screen Files**
+When screen files become too large and contain multiple widgets, they become hard to maintain and test.
+
+### **✅ Solution: Extract Widgets to Separate Files**
+
+#### **Pattern: Feature-Based Widget Organization**
+```
+lib/features/chat/
+├── presentation/
+│   └── chat_screen.dart          # Main screen (clean and focused)
+└── widgets/                      # Extracted widgets
+    ├── chat_welcome_message.dart
+    ├── chat_error_message.dart
+    ├── chat_message_list.dart
+    ├── chat_input_bar.dart
+    └── voice_status_indicator.dart
+```
+
+#### **Benefits:**
+- **Single Responsibility**: Each widget has one clear purpose
+- **Reusability**: Widgets can be reused across different screens
+- **Testability**: Easier to write focused widget tests
+- **Maintainability**: Changes to one widget don't affect others
+- **Readability**: Main screen file becomes much cleaner
+
+#### **Implementation Steps:**
+
+1. **Identify Extractable Widgets**
+   ```dart
+   // Before: Large chat_screen.dart with inline widgets
+   class ChatScreen extends StatefulWidget {
+     // ... 500+ lines with multiple widgets
+   }
+   
+   class ChatWelcomeMessage extends StatelessWidget { /* inline */ }
+   class ChatErrorMessage extends StatelessWidget { /* inline */ }
+   class ChatInputBar extends StatelessWidget { /* inline */ }
+   ```
+
+2. **Create Widget Files**
+   ```dart
+   // lib/features/chat/widgets/chat_welcome_message.dart
+   import 'package:flutter/material.dart';
+   import '../../../core/constants/app_constants.dart';
+   import '../../../shared/widgets/ui_components.dart';
+   
+   class ChatWelcomeMessage extends StatelessWidget {
+     const ChatWelcomeMessage({super.key});
+   
+     @override
+     Widget build(BuildContext context) {
+       return Center(
+         child: Padding(
+           padding: const EdgeInsets.all(AppConstants.paddingLarge),
+           child: Column(
+             mainAxisAlignment: MainAxisAlignment.center,
+             children: [
+               AppIcon(
+                 icon: Icons.chat_bubble_outline,
+                 size: 80,
+                 color: AppConstants.primaryColor.withOpacity(0.5),
+               ),
+               // ... rest of widget
+             ],
+           ),
+         ),
+       );
+     }
+   }
+   ```
+
+3. **Update Main Screen**
+   ```dart
+   // lib/features/chat/presentation/chat_screen.dart
+   import '../widgets/chat_welcome_message.dart';
+   import '../widgets/chat_error_message.dart';
+   import '../widgets/chat_message_list.dart';
+   import '../widgets/chat_input_bar.dart';
+   import '../widgets/voice_status_indicator.dart';
+   
+   class ChatScreen extends StatefulWidget {
+     // Now clean and focused on screen logic
+     @override
+     Widget build(BuildContext context) {
+       return Scaffold(
+         body: Column(
+           children: [
+             Expanded(
+               child: BlocBuilder<ChatBloc, ChatState>(
+                 builder: (context, state) {
+                   if (state is ChatError) {
+                     return ChatErrorMessage(message: state.message);
+                   }
+                   if (state is ChatLoaded && state.messages.isEmpty) {
+                     return const ChatWelcomeMessage();
+                   }
+                   return ChatMessageList(
+                     messages: state.messages,
+                     isProcessing: state.isProcessing,
+                     scrollController: _scrollController,
+                   );
+                 },
+               ),
+             ),
+             ChatInputBar(
+               messageController: _messageController,
+               isComposing: _isComposing,
+               onChanged: _handleTextChanged,
+               onSubmitted: _handleSubmitted,
+             ),
+           ],
+         ),
+       );
+     }
+   }
+   ```
+
+#### **Widget Extraction Guidelines:**
+
+1. **Extract When:**
+   - Widget is 50+ lines
+   - Widget has complex logic
+   - Widget could be reused elsewhere
+   - Main screen file is 300+ lines
+
+2. **Naming Convention:**
+   - Use descriptive names: `ChatWelcomeMessage`, `VoiceStatusIndicator`
+   - Follow feature prefix: `Chat*`, `File*`, `Settings*`
+
+3. **File Organization:**
+   - Keep widgets in `lib/features/{feature}/widgets/`
+   - One widget per file
+   - Use snake_case for file names
+
+4. **Import Management:**
+   - Import widgets in main screen file
+   - Use relative imports for feature widgets
+   - Handle naming conflicts with `hide` or `as` keywords
+
+#### **Example: Complete Extraction**
+```dart
+// Before: 500+ line chat_screen.dart
+class ChatScreen extends StatefulWidget {
+  // ... lots of code
+  Widget _buildWelcomeMessage() { /* 50 lines */ }
+  Widget _buildErrorMessage() { /* 30 lines */ }
+  Widget _buildMessageList() { /* 80 lines */ }
+  Widget _buildInputBar() { /* 100 lines */ }
+}
+
+// After: Clean 150-line chat_screen.dart
+class ChatScreen extends StatefulWidget {
+  // ... focused on screen logic only
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Column(
+        children: [
+          Expanded(child: _buildBody()),
+          ChatInputBar(/* props */),
+        ],
+      ),
+    );
+  }
+}
+```
+
+#### **Testing Benefits:**
+```dart
+// test/features/chat/widgets/chat_welcome_message_test.dart
+testWidgets('ChatWelcomeMessage renders correctly', (WidgetTester tester) async {
+  await tester.pumpWidget(
+    TestConfig.createTestApp(const ChatWelcomeMessage()),
+  );
+  
+  expect(find.text('Welcome to GenLite'), findsOneWidget);
+  expect(find.byIcon(Icons.chat_bubble_outline), findsOneWidget);
+});
+```
+
+### **🎯 Key Takeaways for Widget Extraction:**
+
+- **Extract widgets when they exceed 50 lines or have complex logic**
+- **Organize by feature: `lib/features/{feature}/widgets/`**
+- **Keep main screen files focused on screen logic and state management**
+- **Use descriptive widget names and follow naming conventions**
+- **Handle import conflicts appropriately**
+- **Write focused tests for each extracted widget**
+
+This pattern will make your codebase much more maintainable and testable! 🚀
+
 **User**: This is really helpful! Can you summarize the key takeaways?
 
 **Assistant**: Absolutely! Here are the key takeaways for improving BLoC patterns:
