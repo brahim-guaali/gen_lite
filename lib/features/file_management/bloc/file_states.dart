@@ -1,5 +1,5 @@
 import 'package:equatable/equatable.dart';
-import '../models/file_model.dart';
+import 'package:genlite/features/file_management/models/file_model.dart';
 
 abstract class FileState extends Equatable {
   const FileState();

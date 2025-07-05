@@ -26,8 +26,24 @@ This is a Flutter app called GenLite - an offline AI assistant that uses the Gem
 
 ### Imports
 - Group imports: Flutter/Dart packages first, then project imports
-- Use relative imports for project files
+- **ALWAYS use absolute imports starting with "package:" for project files**
 - Import specific files rather than entire directories
+- **NEVER use relative imports (../ or ./) for project files**
+
+### Import Examples
+```dart
+// ✅ CORRECT - Use absolute imports
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:genlite/core/constants/app_constants.dart';
+import 'package:genlite/features/chat/bloc/chat_bloc.dart';
+import 'package:genlite/shared/services/chat_service.dart';
+
+// ❌ INCORRECT - Don't use relative imports
+import '../constants/app_constants.dart';
+import '../../features/chat/bloc/chat_bloc.dart';
+import './chat_service.dart';
+```
 
 ### Widget Structure
 - Use `const` constructors when possible

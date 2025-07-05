@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:genlite/shared/models/conversation.dart';
 import 'package:genlite/shared/models/message.dart';
+import 'package:genlite/features/settings/models/agent_model.dart';
+import 'package:genlite/features/chat/bloc/chat_states.dart';
 import 'package:genlite/shared/services/storage_service.dart';
 import 'package:genlite/shared/utils/logger.dart';
-import '../../features/settings/models/agent_model.dart';
-import '../../features/chat/bloc/chat_states.dart';
+import 'package:hive/hive.dart';
 
 class ChatService {
   static final ChatService _instance = ChatService._internal();
@@ -39,10 +42,8 @@ class ChatService {
   // Load conversations from persistent storage
   Future<void> _loadConversations() async {
     try {
-      final conversationsData =
-          await StorageService.getSetting<List<Map<String, dynamic>>>(
-                  'conversations') ??
-              [];
+      // Use the dedicated loadConversations method instead of getSetting
+      final conversationsData = await StorageService.loadConversations();
       _conversations =
           conversationsData.map((data) => Conversation.fromJson(data)).toList();
 
@@ -322,10 +323,15 @@ class ChatService {
   // Save conversations to persistent storage
   Future<void> _saveConversations() async {
     try {
-      final conversationsData =
-          _conversations.map((conv) => conv.toJson()).toList();
-      await StorageService.saveSetting('conversations', conversationsData);
+      // Clear existing conversations and save each one individually
+      final box = Hive.box('conversations');
+      await box.clear();
 
+      for (final conversation in _conversations) {
+        await box.put(conversation.id, conversation.toJson());
+      }
+
+      // Save current conversation ID to settings
       if (_currentConversation != null) {
         await StorageService.saveSetting(
             'current_conversation_id', _currentConversation!.id);

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../features/voice/bloc/voice_bloc.dart';
-import '../../features/voice/bloc/voice_event.dart';
-import '../../features/voice/bloc/voice_state.dart';
-import '../../core/constants/app_constants.dart';
+import 'package:genlite/features/voice/bloc/voice_bloc.dart';
+import 'package:genlite/features/voice/bloc/voice_event.dart';
+import 'package:genlite/features/voice/bloc/voice_state.dart';
+import 'package:genlite/core/constants/app_constants.dart';
 
 /// Voice input button with microphone icon
 class VoiceInputButton extends StatelessWidget {

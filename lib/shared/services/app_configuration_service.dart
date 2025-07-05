@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../features/chat/bloc/chat_bloc.dart';
-import '../../features/file_management/bloc/file_bloc.dart';
-import '../../features/settings/bloc/agent_bloc.dart';
-import '../../features/settings/bloc/agent_events.dart';
-import '../../features/voice/bloc/voice_bloc.dart';
-import '../../features/voice/bloc/voice_event.dart';
+import 'package:genlite/features/chat/bloc/chat_bloc.dart';
+import 'package:genlite/features/file_management/bloc/file_bloc.dart';
+import 'package:genlite/features/settings/bloc/agent_bloc.dart';
+import 'package:genlite/features/settings/bloc/agent_events.dart';
+import 'package:genlite/features/voice/bloc/voice_bloc.dart';
+import 'package:genlite/features/voice/bloc/voice_event.dart';
+import 'package:genlite/shared/utils/logger.dart';
 
 class AppConfigurationService {
   static List<BlocProvider> getAppBlocProviders() {

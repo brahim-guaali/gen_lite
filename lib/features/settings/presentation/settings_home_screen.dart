@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'agent_management_screen.dart';
-import './voice_settings_screen.dart';
-import 'about_screen.dart';
+import 'package:genlite/features/settings/presentation/agent_management_screen.dart';
+import 'package:genlite/features/settings/presentation/voice_settings_screen.dart';
+import 'package:genlite/features/settings/presentation/about_screen.dart';
 
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});

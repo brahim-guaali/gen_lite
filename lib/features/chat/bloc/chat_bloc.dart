@@ -5,9 +5,9 @@ import 'package:genlite/shared/models/message.dart';
 import 'package:genlite/shared/services/llm_service.dart';
 import 'package:genlite/shared/services/chat_service.dart';
 import 'package:genlite/shared/utils/logger.dart';
-import '../../settings/models/agent_model.dart';
-import 'chat_events.dart';
-import 'chat_states.dart';
+import 'package:genlite/features/settings/models/agent_model.dart';
+import 'package:genlite/features/chat/bloc/chat_events.dart';
+import 'package:genlite/features/chat/bloc/chat_states.dart';
 
 class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final LLMService _llmService = LLMService();

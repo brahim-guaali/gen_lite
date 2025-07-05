@@ -2,11 +2,12 @@ import 'dart:io';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:uuid/uuid.dart';
-import '../../../shared/services/file_processing_service.dart';
-import '../../../shared/services/storage_service.dart';
-import 'file_events.dart';
-import 'file_states.dart';
-import '../models/file_model.dart';
+import 'package:genlite/shared/services/file_processing_service.dart';
+import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/utils/logger.dart';
+import 'package:genlite/features/file_management/bloc/file_events.dart';
+import 'package:genlite/features/file_management/bloc/file_states.dart';
+import 'package:genlite/features/file_management/models/file_model.dart';
 
 class FileBloc extends Bloc<FileEvent, FileState> {
   final Uuid _uuid = const Uuid();

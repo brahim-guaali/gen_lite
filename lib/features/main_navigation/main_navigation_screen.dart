@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../chat/presentation/chat_screen.dart';
-import '../file_management/presentation/file_management_screen.dart';
-import '../settings/presentation/settings_home_screen.dart';
-import '../settings/bloc/agent_bloc.dart';
-import '../settings/bloc/agent_states.dart';
-import '../chat/bloc/chat_bloc.dart';
+import 'package:genlite/features/chat/presentation/chat_screen.dart';
+import 'package:genlite/features/file_management/presentation/file_management_screen.dart';
+import 'package:genlite/features/settings/presentation/settings_home_screen.dart';
+import 'package:genlite/features/settings/bloc/agent_bloc.dart';
+import 'package:genlite/features/settings/bloc/agent_states.dart';
+import 'package:genlite/features/chat/bloc/chat_bloc.dart';
+import 'package:genlite/features/voice/bloc/voice_bloc.dart';
+import 'package:genlite/features/file_management/bloc/file_bloc.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../../core/constants/app_constants.dart';
-
-import 'ui_components.dart';
-import '../services/enhanced_model_downloader.dart';
-import '../services/llm_service.dart';
-import '../../shared/services/gemma_downloader.dart';
+import 'package:genlite/core/constants/app_constants.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:genlite/shared/services/enhanced_model_downloader.dart';
+import 'package:genlite/shared/services/llm_service.dart';
+import 'package:genlite/shared/services/gemma_downloader.dart';
+import 'package:genlite/shared/widgets/loading_indicator.dart';
+import 'package:genlite/shared/widgets/ui_components.dart';
 import 'package:flutter_gemma/flutter_gemma.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:io';

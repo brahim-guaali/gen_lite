@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import '../models/message.dart';
-import '../../core/constants/app_constants.dart';
+import 'package:genlite/shared/models/message.dart';
+import 'package:genlite/core/constants/app_constants.dart';
 
 class MessageBubble extends StatefulWidget {
   final Message message;

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/constants/app_constants.dart';
+import 'package:genlite/core/constants/app_constants.dart';
 
 // MARK: - Buttons
 

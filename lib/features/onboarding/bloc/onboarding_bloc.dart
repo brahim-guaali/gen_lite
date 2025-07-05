@@ -1,7 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../shared/services/storage_service.dart';
-import 'onboarding_event.dart';
-import 'onboarding_state.dart';
+import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/utils/logger.dart';
+import 'package:genlite/features/onboarding/bloc/onboarding_event.dart';
+import 'package:genlite/features/onboarding/bloc/onboarding_state.dart';
 
 // BLoC
 class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {

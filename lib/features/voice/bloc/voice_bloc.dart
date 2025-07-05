@@ -1,12 +1,11 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../../shared/services/speech_service.dart';
-import '../../../shared/services/tts_service.dart';
-import '../../../shared/services/storage_service.dart';
-import '../../../shared/utils/logger.dart';
-import 'voice_event.dart';
-import 'voice_state.dart';
+import 'package:genlite/shared/services/speech_service.dart';
+import 'package:genlite/shared/services/tts_service.dart';
+import 'package:genlite/shared/services/storage_service.dart';
+import 'package:genlite/shared/utils/logger.dart';
+import 'package:genlite/features/voice/bloc/voice_event.dart';
+import 'package:genlite/features/voice/bloc/voice_state.dart';
 
 /// BLoC for managing voice input and output functionality
 class VoiceBloc extends Bloc<VoiceEvent, VoiceState> {
