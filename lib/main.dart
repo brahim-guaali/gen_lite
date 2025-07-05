@@ -10,6 +10,7 @@ import 'features/settings/bloc/agent_bloc.dart';
 import 'features/settings/bloc/agent_events.dart';
 import 'features/settings/bloc/agent_states.dart';
 import 'features/settings/presentation/agent_management_screen.dart';
+import 'features/settings/presentation/settings_home_screen.dart';
 import 'features/onboarding/presentation/onboarding_screen.dart';
 import 'features/voice/bloc/voice_bloc.dart';
 import 'features/voice/bloc/voice_event.dart';
@@ -156,7 +157,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const ChatScreen(),
     const FileManagementScreen(),
-    const AgentManagementScreen(),
+    const SettingsHomeScreen(),
   ];
 
   @override
