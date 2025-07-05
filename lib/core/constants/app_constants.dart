@@ -77,4 +77,21 @@ class AppConstants {
   static const Color secondaryTextColor = Color(0xFF475569);
   static const Color tertiaryTextColor = Color(0xFF64748B);
   static const Color quaternaryTextColor = Color(0xFF94A3B8);
+
+  // Color utility methods for opacity variants
+  static Color primaryColorWithOpacity(double opacity) {
+    return Color.fromRGBO(99, 102, 241, opacity);
+  }
+
+  static Color errorColorWithOpacity(double opacity) {
+    return Color.fromRGBO(239, 68, 68, opacity);
+  }
+
+  static Color onSurfaceColorWithOpacity(double opacity) {
+    return Color.fromRGBO(30, 41, 59, opacity);
+  }
+
+  static Color textColorWithOpacity(double opacity) {
+    return Color.fromRGBO(30, 41, 59, opacity);
+  }
 }

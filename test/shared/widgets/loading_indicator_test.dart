@@ -228,8 +228,7 @@ void main() {
       bool foundOverlayContainer = false;
       for (final element in containers.evaluate()) {
         final container = element.widget as Container;
-        if (container.color == Color.fromARGB(77, 99, 102, 241)) {
-          // AppConstants.primaryColor with 0.3 opacity
+        if (container.color == AppConstants.primaryColorWithOpacity(0.3)) {
           foundOverlayContainer = true;
           break;
         }
