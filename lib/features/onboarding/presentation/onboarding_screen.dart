@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/ui_components.dart';
-import '../../../shared/widgets/download_screen.dart';
+
 import '../bloc/onboarding_bloc.dart';
 import '../bloc/onboarding_event.dart';
 import '../bloc/onboarding_state.dart'
@@ -43,14 +43,6 @@ class OnboardingScreen extends StatelessWidget {
               return OnboardingTermsScreen(onComplete: onComplete);
             }
 
-            if (state is OnboardingDownloadScreen) {
-              return _DownloadScreen(onComplete: onComplete);
-            }
-
-            if (state is OnboardingWelcomeScreen) {
-              return OnboardingWelcomeScreen(onComplete: onComplete);
-            }
-
             if (state is OnboardingError) {
               return OnboardingErrorScreen(
                 message: state.message,
@@ -67,19 +59,6 @@ class OnboardingScreen extends StatelessWidget {
           },
         ),
       ),
-    );
-  }
-}
-
-class _DownloadScreen extends StatelessWidget {
-  final VoidCallback onComplete;
-
-  const _DownloadScreen({required this.onComplete});
-
-  @override
-  Widget build(BuildContext context) {
-    return DownloadScreen(
-      onDownloadComplete: onComplete,
     );
   }
 }
