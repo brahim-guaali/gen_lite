@@ -12,10 +12,15 @@ class TTSService {
   bool _isSpeaking = false;
 
   // Default settings
-  String _language = 'en-US';
-  double _speechRate = 0.5;
-  double _volume = 1.0;
-  double _pitch = 1.0;
+  static const String defaultLanguage = 'en-US';
+  static const double defaultSpeechRate = 0.44;
+  static const double defaultVolume = 0.95;
+  static const double defaultPitch = 1.15;
+
+  String _language = defaultLanguage;
+  double _speechRate = defaultSpeechRate;
+  double _volume = defaultVolume;
+  double _pitch = defaultPitch;
 
   /// Initialize the text-to-speech service
   Future<void> initialize() async {
@@ -195,4 +200,8 @@ class TTSService {
     _isSpeaking = false;
     _isInitialized = false;
   }
+
+  double get speechRate => _speechRate;
+  double get pitch => _pitch;
+  double get volume => _volume;
 }
