@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/ui_components.dart';
+import '../../../shared/popups/gemma_terms_dialog.dart';
 
 class OnboardingTermsScreen extends StatelessWidget {
   final VoidCallback onComplete;
@@ -76,99 +77,46 @@ class OnboardingTermsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'About GenLite',
+            'Welcome to GenLite',
             style: TextStyle(
-              fontSize: 22,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
           ),
           const SizedBox(height: AppConstants.paddingMedium),
           Text(
-            'GenLite is a lightweight, offline AI assistant that runs entirely on your device.\n\n'
-            'To enable AI features, the app will download a large language model (Gemma 3N) from Hugging Face.\n\n'
-            'This download may take several minutes and require several GB of storage. All processing stays on your device.',
+            'GenLite is an offline AI assistant that runs entirely on your device. '
+            'To get started, you\'ll need to download the AI model (about 2GB).',
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[700],
             ),
-            textAlign: TextAlign.center,
           ),
           const SizedBox(height: AppConstants.paddingLarge),
-
-          // Features
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Key Features',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.paddingSmall),
-                _buildFeatureRow(
-                    Icons.security, '100% Offline - No data sent to servers'),
-                _buildFeatureRow(Icons.speed, 'Fast local processing'),
-                _buildFeatureRow(
-                    Icons.privacy_tip, 'Complete privacy protection'),
-                _buildFeatureRow(Icons.file_copy, 'Document analysis support'),
-                _buildFeatureRow(Icons.chat, 'Natural conversation interface'),
-                _buildFeatureRow(
-                    Icons.image, 'Image understanding capabilities'),
-              ],
+          const Text(
+            'By continuing, you agree to:',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: AppConstants.paddingLarge),
-
-          // Terms acceptance
-          AppCard(
-            backgroundColor: AppConstants.accentColor.withValues(alpha: 0.1),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      color: AppConstants.accentColor,
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      'Important Notice',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppConstants.accentColor,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppConstants.paddingSmall),
-                Text(
-                  'By continuing, you agree to download the AI model and accept our privacy policy. '
-                  'The model will be stored locally on your device.',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: AppConstants.paddingSmall),
+          _buildAgreementItem('Download the Gemma AI model to your device'),
+          _buildAgreementItem('Accept the Gemma Terms of Use'),
+          _buildAgreementItem('Use the app for lawful purposes only'),
         ],
       ),
     );
   }
 
-  Widget _buildFeatureRow(IconData icon, String text) {
+  Widget _buildAgreementItem(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
+          const Icon(
+            Icons.check_circle,
             size: 20,
             color: AppConstants.primaryColor,
           ),
@@ -194,13 +142,20 @@ class OnboardingTermsScreen extends StatelessWidget {
           isFullWidth: true,
         ),
         const SizedBox(height: AppConstants.paddingMedium),
-        SecondaryButton(
-          text: 'Learn More',
-          icon: Icons.info,
+        TextButton(
           onPressed: () {
-            // TODO: Show more detailed information
+            showDialog(
+              context: context,
+              builder: (context) => const GemmaTermsDialog(),
+            );
           },
-          isFullWidth: true,
+          child: const Text(
+            'View Terms of Use',
+            style: TextStyle(
+              color: AppConstants.primaryColor,
+              decoration: TextDecoration.underline,
+            ),
+          ),
         ),
       ],
     );
