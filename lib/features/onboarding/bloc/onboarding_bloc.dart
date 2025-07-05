@@ -18,18 +18,14 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     emit(OnboardingLoading());
 
     try {
-      final hasAcceptedTerms =
-          await StorageService.getSetting<bool>('hasAcceptedTerms') ?? false;
-      final hasCompletedDownload =
-          await StorageService.getSetting<bool>('hasCompletedDownload') ??
+      final hasCompletedOnboarding =
+          await StorageService.getSetting<bool>('hasCompletedOnboarding') ??
               false;
 
-      if (!hasAcceptedTerms) {
-        emit(OnboardingTermsScreen());
-      } else if (!hasCompletedDownload) {
-        emit(OnboardingDownloadScreen());
+      if (hasCompletedOnboarding) {
+        emit(OnboardingComplete());
       } else {
-        emit(OnboardingWelcomeScreen());
+        emit(OnboardingTermsScreen());
       }
     } catch (e) {
       emit(OnboardingError(e.toString()));
@@ -41,8 +37,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     Emitter<OnboardingState> emit,
   ) async {
     try {
-      await StorageService.saveSetting('hasAcceptedTerms', true);
-      emit(OnboardingDownloadScreen());
+      await StorageService.saveSetting('hasCompletedOnboarding', true);
+      emit(OnboardingComplete());
     } catch (e) {
       emit(OnboardingError(e.toString()));
     }
@@ -53,8 +49,8 @@ class OnboardingBloc extends Bloc<OnboardingEvent, OnboardingState> {
     Emitter<OnboardingState> emit,
   ) async {
     try {
-      await StorageService.saveSetting('hasCompletedDownload', true);
-      emit(OnboardingWelcomeScreen());
+      await StorageService.saveSetting('hasCompletedOnboarding', true);
+      emit(OnboardingComplete());
     } catch (e) {
       emit(OnboardingError(e.toString()));
     }
