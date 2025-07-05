@@ -44,7 +44,8 @@ class VoiceInputButton extends StatelessWidget {
                 }
               : null,
           style: IconButton.styleFrom(
-            backgroundColor: isListening ? Colors.red.withOpacity(0.1) : null,
+            backgroundColor:
+                isListening ? Colors.red.withValues(alpha: 0.1) : null,
             shape: const CircleBorder(),
             minimumSize: Size(size, size),
           ),

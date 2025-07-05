@@ -59,7 +59,7 @@ class FileManagementScreen extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.7),
+                                .withValues(alpha: 0.7),
                           ),
                       textAlign: TextAlign.center,
                     ),
@@ -120,7 +120,7 @@ class FileManagementScreen extends StatelessWidget {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                   ),
               textAlign: TextAlign.center,
             ),
@@ -193,7 +193,7 @@ class _FileCard extends StatelessWidget {
                             color: Theme.of(context)
                                 .colorScheme
                                 .onSurface
-                                .withOpacity(0.7),
+                                .withValues(alpha: 0.7),
                           ),
                     ),
                   ],
@@ -202,7 +202,8 @@ class _FileCard extends StatelessWidget {
               if (file.isProcessed)
                 AppBadge(
                   text: 'Ready',
-                  backgroundColor: AppConstants.successColor.withOpacity(0.1),
+                  backgroundColor:
+                      AppConstants.successColor.withValues(alpha: 0.1),
                   textColor: AppConstants.successColor,
                 ),
               PopupMenuButton<String>(
@@ -263,7 +264,7 @@ class _FileCard extends StatelessWidget {
       icon: iconData,
       size: 32,
       color: iconColor,
-      backgroundColor: iconColor.withOpacity(0.1),
+      backgroundColor: iconColor.withValues(alpha: 0.1),
       padding: 8,
     );
   }

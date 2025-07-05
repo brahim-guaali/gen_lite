@@ -16,7 +16,7 @@ class ChatWelcomeMessage extends StatelessWidget {
             AppIcon(
               icon: Icons.chat_bubble_outline,
               size: 80,
-              color: AppConstants.primaryColor.withOpacity(0.5),
+              color: AppConstants.primaryColor.withValues(alpha: 0.5),
             ),
             AppSpacing.lg,
             Text(
@@ -33,7 +33,7 @@ class ChatWelcomeMessage extends StatelessWidget {
                     color: Theme.of(context)
                         .colorScheme
                         .onSurface
-                        .withOpacity(0.7),
+                        .withValues(alpha: 0.7),
                   ),
               textAlign: TextAlign.center,
             ),

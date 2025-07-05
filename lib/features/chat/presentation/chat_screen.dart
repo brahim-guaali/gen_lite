@@ -4,11 +4,7 @@ import '../bloc/chat_bloc.dart';
 import '../bloc/chat_events.dart';
 import '../bloc/chat_states.dart';
 import '../../../shared/models/message.dart';
-import '../../../shared/widgets/message_bubble.dart';
 import '../../../shared/widgets/loading_indicator.dart';
-import '../../../shared/widgets/ui_components.dart';
-import '../../../shared/widgets/voice_components.dart'
-    hide VoiceStatusIndicator;
 import '../../../core/constants/app_constants.dart';
 import '../../settings/bloc/agent_bloc.dart';
 import '../../settings/bloc/agent_events.dart';
@@ -21,6 +17,8 @@ import '../widgets/chat_error_message.dart';
 import '../widgets/chat_message_list.dart';
 import '../widgets/voice_status_indicator.dart';
 import '../widgets/chat_input_bar.dart';
+import '../widgets/chat_app_bar_title.dart';
+import '../widgets/agent_switcher_menu.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -83,93 +81,14 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: BlocBuilder<AgentBloc, AgentState>(
-          builder: (context, agentState) {
-            if (agentState is AgentLoaded && agentState.activeAgent != null) {
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('GenLite'),
-                  Text(
-                    agentState.activeAgent!.name,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.7),
-                        ),
-                  ),
-                ],
-              );
-            }
-            return const Text('GenLite');
-          },
-        ),
+        title: const ChatAppBarTitle(),
         actions: [
           // Voice status indicator
           BlocBuilder<VoiceBloc, VoiceState>(
             builder: (context, voiceState) =>
                 VoiceStatusIndicator(voiceState: voiceState),
           ),
-          BlocBuilder<AgentBloc, AgentState>(
-            builder: (context, agentState) {
-              if (agentState is AgentLoaded && agentState.agents.isNotEmpty) {
-                return PopupMenuButton<String>(
-                  icon: const Icon(Icons.smart_toy),
-                  tooltip: 'Switch Agent',
-                  onSelected: (agentId) {
-                    if (agentId == 'none') {
-                      context.read<AgentBloc>().add(const SetActiveAgent(''));
-                    } else {
-                      context.read<AgentBloc>().add(SetActiveAgent(agentId));
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    ...agentState.agents.map((agent) => PopupMenuItem(
-                          value: agent.id,
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.smart_toy,
-                                size: 16,
-                                color: agentState.activeAgent?.id == agent.id
-                                    ? Theme.of(context).colorScheme.primary
-                                    : null,
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(child: Text(agent.name)),
-                              if (agentState.activeAgent?.id == agent.id)
-                                Icon(
-                                  Icons.check,
-                                  size: 16,
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
-                            ],
-                          ),
-                        )),
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: 'none',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.person, size: 16),
-                          const SizedBox(width: 8),
-                          const Text('Default AI'),
-                          if (agentState.activeAgent == null)
-                            Icon(
-                              Icons.check,
-                              size: 16,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
+          const AgentSwitcherMenu(),
         ],
       ),
       body: MultiBlocListener(
