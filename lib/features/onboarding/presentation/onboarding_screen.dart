@@ -30,7 +30,7 @@ class OnboardingScreen extends StatelessWidget {
         },
         child: BlocBuilder<OnboardingBloc, OnboardingState>(
           builder: (context, state) {
-            if (state is OnboardingLoading) {
+            if (state is OnboardingInitial || state is OnboardingLoading) {
               return const Scaffold(
                 body: Center(
                   child: CircularProgressIndicator(),
