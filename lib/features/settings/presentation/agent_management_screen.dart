@@ -5,6 +5,10 @@ import '../bloc/agent_events.dart';
 import '../bloc/agent_states.dart';
 import '../models/agent_model.dart';
 import '../../../shared/widgets/loading_indicator.dart';
+import '../../../shared/widgets/voice_components.dart';
+import '../../voice/bloc/voice_bloc.dart';
+import '../../voice/bloc/voice_event.dart';
+import '../../voice/bloc/voice_state.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -101,13 +105,14 @@ class AgentManagementScreen extends StatelessWidget {
 
   Widget _buildAgentList(BuildContext context, AgentLoaded state) {
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Column(
         children: [
           TabBar(
             tabs: const [
               Tab(text: 'My Agents'),
               Tab(text: 'Templates'),
+              Tab(text: 'Voice'),
             ],
             labelColor: Theme.of(context).colorScheme.primary,
           ),
@@ -116,6 +121,7 @@ class AgentManagementScreen extends StatelessWidget {
               children: [
                 _buildMyAgents(context, state.agents, state.activeAgent),
                 _buildTemplates(context, state.templates),
+                _buildVoiceSettings(context),
               ],
             ),
           ),
@@ -151,6 +157,97 @@ class AgentManagementScreen extends StatelessWidget {
         final template = templates[index];
         return _TemplateCard(template: template);
       },
+    );
+  }
+
+  Widget _buildVoiceSettings(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Voice Settings',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 16),
+
+          // Voice output toggle
+          VoiceOutputToggle(),
+
+          const SizedBox(height: 16),
+
+          // Voice settings panel
+          VoiceSettingsPanel(),
+
+          const SizedBox(height: 16),
+
+          // Voice status indicator
+          BlocBuilder<VoiceBloc, VoiceState>(
+            builder: (context, state) {
+              if (state is VoiceError) {
+                return Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            state.message,
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              if (state is VoiceNotAvailable) {
+                return Card(
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.mic_off,
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Voice features not available: ${state.reason}',
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return const SizedBox.shrink();
+            },
+          ),
+        ],
+      ),
     );
   }
 
