@@ -8,7 +8,6 @@ import '../widgets/agent_empty_state.dart';
 import '../widgets/agent_error_message.dart';
 import '../widgets/agent_list.dart';
 import '../widgets/template_list.dart';
-import '../widgets/voice_settings_section.dart';
 import '../widgets/create_agent_dialog.dart';
 
 class AgentManagementScreen extends StatelessWidget {
@@ -53,14 +52,13 @@ class AgentManagementScreen extends StatelessWidget {
 
   Widget _buildAgentList(BuildContext context, AgentLoaded state) {
     return DefaultTabController(
-      length: 3,
+      length: 2,
       child: Column(
         children: [
           TabBar(
             tabs: const [
               Tab(text: 'My Agents'),
               Tab(text: 'Templates'),
-              Tab(text: 'Voice'),
             ],
             labelColor: Theme.of(context).colorScheme.primary,
           ),
@@ -69,7 +67,6 @@ class AgentManagementScreen extends StatelessWidget {
               children: [
                 _buildMyAgents(context, state.agents, state.activeAgent),
                 _buildTemplates(context, state.templates),
-                _buildVoiceSettings(context),
               ],
             ),
           ),
@@ -89,10 +86,6 @@ class AgentManagementScreen extends StatelessWidget {
 
   Widget _buildTemplates(BuildContext context, List<AgentModel> templates) {
     return TemplateList(templates: templates);
-  }
-
-  Widget _buildVoiceSettings(BuildContext context) {
-    return const VoiceSettingsSection();
   }
 
   void _showCreateAgentDialog(BuildContext context) {
