@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../shared/widgets/ui_components.dart';
+import '../bloc/chat_bloc.dart';
+import '../bloc/chat_events.dart';
 
 class ChatWelcomeMessage extends StatelessWidget {
   const ChatWelcomeMessage({super.key});
@@ -28,7 +31,7 @@ class ChatWelcomeMessage extends StatelessWidget {
             ),
             AppSpacing.md,
             Text(
-              'Your offline AI assistant is ready to help. Start chatting below.',
+              'Your offline AI assistant is ready to help. Start a new conversation to begin.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: Theme.of(context)
                         .colorScheme
@@ -38,6 +41,14 @@ class ChatWelcomeMessage extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             AppSpacing.xl,
+            PrimaryButton(
+              text: 'Start New Conversation',
+              onPressed: () {
+                context.read<ChatBloc>().add(
+                      const CreateNewConversation(title: 'New Conversation'),
+                    );
+              },
+            ),
           ],
         ),
       ),

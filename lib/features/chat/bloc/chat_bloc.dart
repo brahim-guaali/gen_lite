@@ -14,7 +14,7 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
   final ChatService _chatService = ChatService();
   InferenceChat? _currentChat;
 
-  ChatBloc() : super(ChatInitial()) {
+  ChatBloc() : super(ChatLoading()) {
     on<CreateNewConversation>(_onCreateNewConversation);
     on<SendMessage>(_onSendMessage);
     on<LoadConversation>(_onLoadConversation);

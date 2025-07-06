@@ -29,23 +29,6 @@ class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _isComposing = false;
-  bool _hasAutoCreated = false;
-
-  @override
-  void initState() {
-    super.initState();
-    // Automatically create a new conversation if none exists
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final chatBloc = context.read<ChatBloc>();
-      final state = chatBloc.state;
-      if (state is ChatInitial && !_hasAutoCreated) {
-        chatBloc.add(const CreateNewConversation(title: 'New Conversation'));
-        setState(() {
-          _hasAutoCreated = true;
-        });
-      }
-    });
-  }
 
   @override
   void dispose() {
@@ -127,11 +110,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   }
                 },
                 builder: (context, state) {
-                  if (state is ChatInitial) {
-                    // Show a loading indicator while the conversation is being created
-                    return const Center(child: LoadingIndicator());
-                  }
-
                   if (state is ChatLoading) {
                     return const Center(
                       child: LoadingIndicator(),
@@ -142,11 +120,16 @@ class _ChatScreenState extends State<ChatScreen> {
                     return ChatErrorMessage(message: state.message);
                   }
 
+                  if (state is ChatInitial) {
+                    // Show welcome message when no conversations exist
+                    return const ChatWelcomeMessage();
+                  }
+
                   if (state is ChatLoaded) {
                     final messages = state.currentConversation.messages;
 
                     if (messages.isEmpty) {
-                      // Show a welcome message, but no button
+                      // Show a welcome message for empty conversation
                       return const ChatWelcomeMessage();
                     }
 
