@@ -177,26 +177,40 @@ class AboutScreen extends StatelessWidget {
                   subtitle: 'Powered by Google\'s Gemma language model',
                   color: Colors.purple,
                 ),
+                const SizedBox(height: 12),
+                AboutInfoCard(
+                  icon: Icons.voice_chat,
+                  title: 'Voice Interaction',
+                  subtitle: 'Speak naturally with your AI assistant',
+                  color: Colors.orange,
+                ),
+                const SizedBox(height: 12),
+                AboutInfoCard(
+                  icon: Icons.file_upload,
+                  title: 'File Processing',
+                  subtitle: 'Upload and analyze documents easily',
+                  color: Colors.teal,
+                ),
               ],
             ),
             const SizedBox(height: 24),
 
-            // Technical Info
+            // App Information
             AboutInfoSection(
-              title: 'Technical Information',
+              title: 'App Information',
               items: [
                 AboutInfoCard(
                   icon: Icons.code,
                   title: 'License',
                   subtitle: 'MIT License - Open Source',
-                  color: Colors.orange,
+                  color: Colors.indigo,
                 ),
                 const SizedBox(height: 12),
                 AboutInfoCard(
-                  icon: Icons.architecture,
-                  title: 'Architecture',
-                  subtitle: 'Clean Architecture with BLoC pattern',
-                  color: Colors.teal,
+                  icon: Icons.update,
+                  title: 'Version',
+                  subtitle: '2.0.0',
+                  color: Colors.cyan,
                 ),
               ],
             ),

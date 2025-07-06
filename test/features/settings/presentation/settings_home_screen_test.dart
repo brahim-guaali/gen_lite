@@ -123,14 +123,16 @@ void main() {
 
       // Verify sections
       expect(find.text('Key Features'), findsOneWidget);
-      expect(find.text('Technical Information'), findsOneWidget);
+      expect(find.text('App Information'), findsOneWidget);
 
       // Verify feature cards
       expect(find.text('Privacy First'), findsOneWidget);
       expect(find.text('Offline Capable'), findsOneWidget);
       expect(find.text('AI Powered'), findsOneWidget);
+      expect(find.text('Voice Interaction'), findsOneWidget);
+      expect(find.text('File Processing'), findsOneWidget);
       expect(find.text('License'), findsOneWidget);
-      expect(find.text('Architecture'), findsOneWidget);
+      expect(find.text('Version'), findsOneWidget);
 
       // Verify privacy commitment
       expect(find.text('Privacy Commitment'), findsOneWidget);
@@ -151,8 +153,11 @@ void main() {
       expect(find.text('Works without internet connection'), findsOneWidget);
       expect(find.text('Powered by Google\'s Gemma language model'),
           findsOneWidget);
+      expect(
+          find.text('Speak naturally with your AI assistant'), findsOneWidget);
+      expect(find.text('Upload and analyze documents easily'), findsOneWidget);
       expect(find.text('MIT License - Open Source'), findsOneWidget);
-      expect(find.text('Clean Architecture with BLoC pattern'), findsOneWidget);
+      expect(find.text('2.0.0'), findsOneWidget);
     });
 
     testWidgets('should have proper visual hierarchy in about screen',
@@ -163,16 +168,18 @@ void main() {
         ),
       );
 
-      // Verify cards are present
-      expect(find.byType(Card), findsNWidgets(5));
+      // Verify cards are present (5 features + 2 app info)
+      expect(find.byType(Card), findsNWidgets(7));
 
       // Verify icons are present
       expect(find.byIcon(Icons.auto_awesome), findsOneWidget);
       expect(find.byIcon(Icons.security), findsOneWidget);
       expect(find.byIcon(Icons.offline_bolt), findsOneWidget);
       expect(find.byIcon(Icons.psychology), findsOneWidget);
+      expect(find.byIcon(Icons.voice_chat), findsOneWidget);
+      expect(find.byIcon(Icons.file_upload), findsOneWidget);
       expect(find.byIcon(Icons.code), findsOneWidget);
-      expect(find.byIcon(Icons.architecture), findsOneWidget);
+      expect(find.byIcon(Icons.update), findsOneWidget);
       expect(find.byIcon(Icons.verified_user), findsOneWidget);
     });
 
