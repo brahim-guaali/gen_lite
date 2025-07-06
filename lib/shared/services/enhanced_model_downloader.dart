@@ -103,13 +103,7 @@ class EnhancedModelDownloader {
     bool allowResume = true,
   }) async {
     final docDir = await getApplicationDocumentsDirectory();
-    final modelDir = Directory('${docDir.path}/gemma2b');
-    if (!await modelDir.exists()) {
-      await modelDir.create(recursive: true);
-      Logger.info('EnhancedModelDownloader',
-          'Created model directory: \'${modelDir.path}\'');
-    }
-    final filePath = '${modelDir.path}/$filename';
+    final filePath = '${docDir.path}/$filename';
     final file = File(filePath);
     final downloadState = await _getDownloadState(modelId, filename);
 
@@ -189,6 +183,7 @@ class EnhancedModelDownloader {
       throw Exception('Hugging Face token not found in .env');
     }
     final file = File(filePath);
+    // Ensure the parent directory exists (documents directory should always exist)
     final modelDir = file.parent;
     if (!await modelDir.exists()) {
       await modelDir.create(recursive: true);

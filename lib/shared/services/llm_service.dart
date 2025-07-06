@@ -56,11 +56,10 @@ class LLMService {
       // Initialize the FlutterGemma plugin
       final gemma = FlutterGemmaPlugin.instance;
 
-      // Register the model path with the modelManager before loading
-      Logger.debug(
-          LogTags.llmService, 'Registering model path with modelManager');
+      // Set the model path before creating the model
+      Logger.debug(LogTags.llmService, 'Setting model path: $_modelPath');
       await gemma.modelManager.setModelPath(_modelPath!);
-      Logger.debug(LogTags.llmService, 'Model path registered successfully');
+      Logger.debug(LogTags.llmService, 'Model path set successfully');
 
       // Create model with the correct type for Gemma 3N
       _model = await gemma.createModel(
