@@ -9,6 +9,7 @@ import '../widgets/agent_error_message.dart';
 import '../widgets/agent_list.dart';
 import '../widgets/template_list.dart';
 import '../widgets/create_agent_dialog.dart';
+import 'package:genlite/core/constants/app_constants.dart';
 
 class AgentManagementScreen extends StatelessWidget {
   const AgentManagementScreen({super.key});
@@ -55,12 +56,58 @@ class AgentManagementScreen extends StatelessWidget {
       length: 2,
       child: Column(
         children: [
-          TabBar(
-            tabs: const [
-              Tab(text: 'My Agents'),
-              Tab(text: 'Templates'),
-            ],
-            labelColor: Theme.of(context).colorScheme.primary,
+          // Custom Tab Bar Container
+          Container(
+            margin: const EdgeInsets.all(AppConstants.paddingMedium),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surface,
+              borderRadius:
+                  BorderRadius.circular(AppConstants.borderRadiusLarge),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TabBar(
+              tabs: [
+                _buildTab(
+                  context,
+                  icon: Icons.person,
+                  label: 'My Agents',
+                  badge: state.agents.length.toString(),
+                ),
+                _buildTab(
+                  context,
+                  icon: Icons.layers_outlined,
+                  label: 'Templates',
+                  badge: state.templates.length.toString(),
+                ),
+              ],
+              labelColor: AppConstants.primaryColor,
+              unselectedLabelColor: AppConstants.secondaryTextColor,
+              indicatorSize: TabBarIndicatorSize.tab,
+              indicator: BoxDecoration(
+                color: AppConstants.primaryColorWithOpacity(0.1),
+                borderRadius:
+                    BorderRadius.circular(AppConstants.borderRadiusMedium),
+              ),
+              dividerColor: Colors.transparent,
+              labelStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              padding: const EdgeInsets.all(AppConstants.paddingSmall),
+            ),
           ),
           Expanded(
             child: TabBarView(
@@ -70,6 +117,45 @@ class AgentManagementScreen extends StatelessWidget {
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTab(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    String? badge,
+  }) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: AppConstants.paddingSmall),
+          Text(label),
+          if (badge != null) ...[
+            const SizedBox(width: AppConstants.paddingSmall),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 2,
+              ),
+              decoration: BoxDecoration(
+                color: AppConstants.primaryColor,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                badge,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
