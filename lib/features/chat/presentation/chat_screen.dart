@@ -58,6 +58,72 @@ class _ChatScreenState extends State<ChatScreen> {
     context.read<ChatBloc>().add(SendMessage(content: text.trim()));
   }
 
+  void _showClearChatDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Clear Chat'),
+          content: const Text('What would you like to clear?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.read<ChatBloc>().add(ClearCurrentConversation());
+              },
+              child: const Text('Current Chat'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _showConfirmClearAllDialog(context);
+              },
+              child: const Text('All Chats'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showConfirmClearAllDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Clear All Chats'),
+          content: const Text(
+            'This will permanently delete all your conversations. This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.read<ChatBloc>().add(ClearAllConversations());
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Clear All'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -68,6 +134,35 @@ class _ChatScreenState extends State<ChatScreen> {
           BlocBuilder<VoiceBloc, VoiceState>(
             builder: (context, voiceState) =>
                 VoiceStatusIndicator(voiceState: voiceState),
+          ),
+          // Clear chat menu
+          BlocBuilder<ChatBloc, ChatState>(
+            builder: (context, chatState) {
+              if (chatState is ChatLoaded &&
+                  chatState.currentConversation.messages.isNotEmpty) {
+                return PopupMenuButton<String>(
+                  icon: const Icon(Icons.more_vert),
+                  onSelected: (value) {
+                    if (value == 'clear') {
+                      _showClearChatDialog(context);
+                    }
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    const PopupMenuItem<String>(
+                      value: 'clear',
+                      child: Row(
+                        children: [
+                          Icon(Icons.clear_all, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('Clear Chat'),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
           ),
           const AgentSwitcherMenu(),
         ],

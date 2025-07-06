@@ -23,6 +23,8 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<ArchiveConversation>(_onArchiveConversation);
     on<DeleteConversation>(_onDeleteConversation);
     on<UpdateStreamingMessage>(_onUpdateStreamingMessage);
+    on<ClearCurrentConversation>(_onClearCurrentConversation);
+    on<ClearAllConversations>(_onClearAllConversations);
 
     // Initialize the service and load existing conversations
     Logger.info(LogTags.chatBloc, 'Initializing ChatBloc');
@@ -352,6 +354,60 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
       }
     } catch (e) {
       emit(ChatError('Failed to delete conversation: $e'));
+    }
+  }
+
+  void _onClearCurrentConversation(
+    ClearCurrentConversation event,
+    Emitter<ChatState> emit,
+  ) async {
+    try {
+      Logger.info(LogTags.chatBloc, 'Clearing current conversation');
+
+      // Clear the current conversation via service
+      await _chatService.clearCurrentConversation();
+
+      // Get updated data from service
+      final currentData = _chatService.getCurrentData();
+
+      if (currentData.conversations.isNotEmpty) {
+        // If there are other conversations, load the first one
+        emit(ChatLoaded(
+          currentConversation: currentData.conversations.first,
+          conversations: currentData.conversations,
+        ));
+      } else {
+        // If no conversations exist, go to initial state
+        emit(ChatInitial());
+      }
+
+      Logger.info(
+          LogTags.chatBloc, 'Current conversation cleared successfully');
+    } catch (e) {
+      Logger.error(LogTags.chatBloc, 'Failed to clear current conversation',
+          error: e);
+      emit(ChatError('Failed to clear conversation: $e'));
+    }
+  }
+
+  void _onClearAllConversations(
+    ClearAllConversations event,
+    Emitter<ChatState> emit,
+  ) async {
+    try {
+      Logger.info(LogTags.chatBloc, 'Clearing all conversations');
+
+      // Clear all conversations via service
+      await _chatService.clearAllConversations();
+
+      // Go to initial state since no conversations exist
+      emit(ChatInitial());
+
+      Logger.info(LogTags.chatBloc, 'All conversations cleared successfully');
+    } catch (e) {
+      Logger.error(LogTags.chatBloc, 'Failed to clear all conversations',
+          error: e);
+      emit(ChatError('Failed to clear all conversations: $e'));
     }
   }
 

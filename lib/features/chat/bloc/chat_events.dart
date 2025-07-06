@@ -100,6 +100,10 @@ class ExportConversation extends ChatEvent {
 
 class ClearConversationHistory extends ChatEvent {}
 
+class ClearCurrentConversation extends ChatEvent {}
+
+class ClearAllConversations extends ChatEvent {}
+
 class AddFileContext extends ChatEvent {
   final String fileId;
   final String fileContent;

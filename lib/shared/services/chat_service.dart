@@ -316,6 +316,56 @@ class ChatService {
     await _saveConversations();
   }
 
+  // Clear current conversation (remove all messages but keep the conversation)
+  Future<void> clearCurrentConversation() async {
+    if (_currentConversation == null) {
+      Logger.warning(LogTags.chatService, 'No current conversation to clear');
+      return;
+    }
+
+    Logger.info(LogTags.chatService,
+        'Clearing current conversation: ${_currentConversation!.title}');
+
+    // Create a new conversation with the same title but no messages
+    final clearedConversation = _currentConversation!.copyWith(
+      messages: [],
+      updatedAt: DateTime.now(),
+    );
+
+    // Update in-memory storage
+    final index = _conversations
+        .indexWhere((conv) => conv.id == _currentConversation!.id);
+    if (index != -1) {
+      _conversations[index] = clearedConversation;
+    }
+
+    _currentConversation = clearedConversation;
+
+    // Save to persistent storage
+    await _saveConversations();
+
+    Logger.info(
+        LogTags.chatService, 'Current conversation cleared successfully');
+  }
+
+  // Clear all conversations
+  Future<void> clearAllConversations() async {
+    Logger.info(LogTags.chatService, 'Clearing all conversations');
+
+    // Clear in-memory storage
+    _conversations.clear();
+    _currentConversation = null;
+
+    // Clear persistent storage
+    final box = Hive.box('conversations');
+    await box.clear();
+
+    // Clear current conversation ID from settings
+    await StorageService.saveSetting('current_conversation_id', null);
+
+    Logger.info(LogTags.chatService, 'All conversations cleared successfully');
+  }
+
   // Set active agent
   void setActiveAgent(AgentModel? agent) {
     _activeAgent = agent;
