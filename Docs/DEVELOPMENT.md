@@ -496,18 +496,119 @@ class MainScreen extends StatefulWidget {
 - The main Settings screen presents a list of options:
   1. **Agents**: Manage AI agents (opens Agent Management screen)
   2. **Voice**: Configure voice input/output (opens Voice Settings screen)
-  3. **About**: App info, version, licenses, etc. (opens About screen)
+  3. **Permissions**: Manage app permissions for microphone, speech, file access, and camera
+  4. **About**: App info, version, licenses, etc. (opens About screen)
 - Tapping an option navigates to the corresponding screen.
 - Each sub-screen has a back button to return to Settings Home.
 - Settings is the entry point for all configuration and info screens.
 
 #### Settings Integration Phase (Updated)
-- Refactor Settings to be a hub with navigation to Agents, Voice, and About screens
+- Refactor Settings to be a hub with navigation to Agents, Voice, Permissions, and About screens
 - Ensure navigation and back behavior is consistent
 - Add About screen if not present
 - Update widget and integration tests for new navigation
 
-### 4.6 Splash Screen and Initialization UI
+### 4.6 Permissions Management
+**Location**: `lib/features/settings/presentation/permissions_screen.dart`
+
+**Dependencies**:
+```yaml
+permission_handler: ^11.3.1  # Permission management
+```
+
+**Supported Permissions**:
+- **Microphone**: Required for voice input and speech recognition
+- **Speech Recognition**: Required for converting voice to text
+- **Storage**: Required for file access and document processing
+- **Camera**: Required for image input (future feature)
+
+**Implementation**:
+```dart
+class PermissionsScreen extends StatefulWidget {
+  @override
+  State<PermissionsScreen> createState() => _PermissionsScreenState();
+}
+
+class _PermissionsScreenState extends State<PermissionsScreen> {
+  Map<Permission, PermissionStatus> _permissionStatuses = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkPermissions();
+  }
+
+  Future<void> _checkPermissions() async {
+    setState(() => _isLoading = true);
+    
+    final permissions = [
+      Permission.microphone,
+      Permission.speech,
+      Permission.storage,
+      Permission.camera,
+    ];
+    
+    final statuses = <Permission, PermissionStatus>{};
+    for (final permission in permissions) {
+      statuses[permission] = await permission.status;
+    }
+    
+    setState(() {
+      _permissionStatuses = statuses;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _requestPermission(Permission permission) async {
+    final status = await permission.request();
+    setState(() {
+      _permissionStatuses[permission] = status;
+    });
+    
+    Logger.info(LogTags.permissions, 
+      'Permission ${permission.toString()} status: $status');
+  }
+}
+```
+
+**Permission Status Display**:
+```dart
+Widget _buildPermissionTile(Permission permission, String title, String description) {
+  final status = _permissionStatuses[permission];
+  final isGranted = status?.isGranted ?? false;
+  
+  return ListTile(
+    leading: Icon(
+      isGranted ? Icons.check_circle : Icons.error,
+      color: isGranted ? Colors.green : Colors.red,
+    ),
+    title: Text(title),
+    subtitle: Text(description),
+    trailing: isGranted
+        ? const Text('Granted', style: TextStyle(color: Colors.green))
+        : PrimaryButton(
+            text: 'Grant',
+            onPressed: () => _requestPermission(permission),
+          ),
+  );
+}
+```
+
+**User Experience**:
+- **Real-time Status**: Shows current permission status for all features
+- **One-tap Grant**: Easy permission granting with clear buttons
+- **Visual Feedback**: Color-coded status indicators (green for granted, red for denied)
+- **Clear Descriptions**: Explains why each permission is needed
+- **Automatic Refresh**: Updates status when permissions change
+
+**Platform Integration**:
+- **iOS**: Uses native permission dialogs with usage descriptions
+- **Android**: Uses runtime permission requests
+- **Fallback Handling**: Graceful degradation when permissions are denied
+- **Settings Redirect**: Option to open system settings for denied permissions
+
+### 4.7 Splash Screen and Initialization UI
 **Location**: Native splash screens and `lib/main.dart`
 
 **Native Splash Screens**:
@@ -586,7 +687,7 @@ Widget _buildHomeScreen() {
 - **Professional Appearance**: Clean, modern design
 - **Loading Feedback**: Clear indication that app is initializing
 
-### 4.7 Voice UI Components
+### 4.8 Voice UI Components
 **Location**: `lib/shared/widgets/voice_components.dart`
 
 **Voice Input Button**:

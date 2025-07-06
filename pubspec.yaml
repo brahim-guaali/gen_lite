@@ -63,6 +63,9 @@ dependencies:
   flutter_tts: ^4.2.3     # Text-to-speech
   record: ^6.0.0          # Audio recording (alternative)
   audioplayers: ^6.5.0    # Audio playback
+  
+  # Permissions
+  permission_handler: ^11.3.1  # Permission management
 
 dev_dependencies:
   flutter_test:

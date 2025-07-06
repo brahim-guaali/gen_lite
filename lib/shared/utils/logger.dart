@@ -87,4 +87,5 @@ class LogTags {
   static const String modelDownloader = '[ModelDownloader]';
   static const String enhancedModelDownloader = '[EnhancedModelDownloader]';
   static const String gemmaDownloader = '[GemmaDownloader]';
+  static const String permissions = '[Permissions]';
 }

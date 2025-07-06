@@ -3,6 +3,7 @@ import 'package:genlite/core/constants/app_constants.dart';
 import 'package:genlite/shared/widgets/ui_components.dart';
 import 'package:genlite/features/settings/presentation/agent_management_screen.dart';
 import 'package:genlite/features/settings/presentation/voice_settings_screen.dart';
+import 'package:genlite/features/settings/presentation/permissions_screen.dart';
 
 class SettingsHomeScreen extends StatelessWidget {
   const SettingsHomeScreen({super.key});
@@ -44,6 +45,22 @@ class SettingsHomeScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => const VoiceSettingsScreen(),
+                ),
+              );
+            },
+          ),
+          const Divider(),
+          // Section: Permissions
+          ListTile(
+            leading: const Icon(Icons.security),
+            title: const Text('Permissions'),
+            subtitle: const Text('Manage app permissions'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PermissionsScreen(),
                 ),
               );
             },

@@ -51,7 +51,7 @@ lib/
 │   ├── chat/              # Chat feature module
 │   ├── file_management/   # File management module
 │   ├── onboarding/        # Onboarding feature
-│   ├── settings/          # Settings and agents
+│   ├── settings/          # Settings, agents, and permissions
 │   └── voice/             # Voice input/output feature
 └── shared/
     ├── models/            # Data models
@@ -142,6 +142,21 @@ class LLMService {
 - Automatic retry with exponential backoff
 - Real-time progress tracking
 
+### 2.5 Permissions Management
+**Decision**: Implement centralized permissions management with user-friendly interface.
+
+**Rationale**:
+- Clear visibility of app permissions
+- Easy permission granting and management
+- Better user experience for permission requests
+- Compliance with platform guidelines
+
+**Features**:
+- Real-time permission status display
+- One-tap permission granting
+- Clear explanations of permission requirements
+- Platform-specific permission handling
+
 ---
 
 ## 3. Data Flow Architecture
@@ -185,6 +200,13 @@ AI Response → Check Voice Output → Text-to-Speech → Audio Playback
 Chat BLoC     Voice BLoC         TTS Service    Device Audio
 ```
 
+### 3.6 Permissions Flow
+```
+App Launch → Check Permissions → Display Status → User Action → Permission Request
+     ↓              ↓                    ↓              ↓              ↓
+Permissions Screen  Device API      UI Update     User Decision   Platform Dialog
+```
+
 ---
 
 ## 4. Component Architecture
@@ -195,7 +217,8 @@ Chat BLoC     Voice BLoC         TTS Service    Device Audio
 **Components**:
 - **Chat Screen**: Message display and input with voice integration
 - **File Management Screen**: File upload and management
-- **Settings Screen**: App configuration, agents, and voice settings
+- **Settings Screen**: App configuration, agents, voice settings, and permissions
+- **Permissions Screen**: Permission status display and management
 - **Download Screen**: Model download with progress
 - **Unified UI Components**: Reusable design system including voice components
   - **VoiceInputButton**: Microphone button for speech input
@@ -222,6 +245,7 @@ Chat BLoC     Voice BLoC         TTS Service    Device Audio
 - **Enhanced Model Downloader**: Smart download management
 - **Speech Service**: Device-native speech recognition
 - **TTS Service**: Device-native text-to-speech
+- **Permission Handler**: Platform permission management
 
 ---
 
@@ -231,7 +255,9 @@ Chat BLoC     Voice BLoC         TTS Service    Device Audio
 - **Local Processing**: No data transmission to external servers
 - **Voice Data**: All speech recognition and TTS processing happens locally
 - **No Cloud Storage**: Voice recordings are not stored or transmitted
-- **Device Permissions**: Minimal required permissions for microphone access
+- **Device Permissions**: Minimal required permissions with clear user control
+- **Permission Transparency**: Clear visibility of all app permissions
+- **User Consent**: Explicit permission requests with explanations
 - **Encrypted Storage**: Local data encrypted at rest
 - **Token Security**: Secure API token handling
 - **Model Security**: Verified model sources and integrity checks
