@@ -5,8 +5,6 @@ import 'package:genlite/features/settings/presentation/agent_management_screen.d
 import 'package:genlite/features/settings/presentation/voice_settings_screen.dart';
 import 'package:genlite/features/settings/presentation/permissions_screen.dart';
 import 'package:genlite/features/settings/widgets/settings_header_section.dart';
-import 'package:genlite/features/settings/widgets/settings_section.dart';
-import 'package:genlite/features/settings/widgets/settings_card.dart';
 import 'package:genlite/features/settings/widgets/privacy_notice_card.dart';
 import 'package:genlite/features/settings/widgets/about_app_header.dart';
 import 'package:genlite/features/settings/widgets/about_info_section.dart';
@@ -39,89 +37,158 @@ class SettingsHomeScreen extends StatelessWidget {
             const SettingsHeaderSection(),
             const SizedBox(height: 24),
 
-            // Settings Categories
-            SettingsSection(
-              title: 'AI & Voice',
-              items: [
-                SettingsCard(
-                  icon: Icons.smart_toy,
-                  title: 'AI Agents',
-                  subtitle: 'Manage and customize AI personalities',
-                  color: Colors.blue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AgentManagementScreen(),
-                      ),
-                    );
-                  },
+            // Main Settings List
+            Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
                 ),
-                const SizedBox(height: 12),
-                SettingsCard(
-                  icon: Icons.record_voice_over,
-                  title: 'Voice Settings',
-                  subtitle: 'Configure speech recognition and TTS',
-                  color: Colors.green,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const VoiceSettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
+              ),
+              child: Column(
+                children: [
+                  _buildSettingsItem(
+                    context,
+                    icon: Icons.smart_toy,
+                    title: 'AI Agents',
+                    subtitle: 'Manage and customize AI personalities',
+                    color: Colors.blue,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AgentManagementScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDivider(context),
+                  _buildSettingsItem(
+                    context,
+                    icon: Icons.record_voice_over,
+                    title: 'Voice Settings',
+                    subtitle: 'Configure speech recognition and TTS',
+                    color: Colors.green,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const VoiceSettingsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDivider(context),
+                  _buildSettingsItem(
+                    context,
+                    icon: Icons.security,
+                    title: 'Permissions',
+                    subtitle: 'Manage app permissions and access',
+                    color: Colors.orange,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PermissionsScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDivider(context),
+                  _buildSettingsItem(
+                    context,
+                    icon: Icons.info_outline,
+                    title: 'About GenLite',
+                    subtitle: 'Version, license, and app information',
+                    color: Colors.purple,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const AboutScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 24),
-
-            SettingsSection(
-              title: 'Privacy & Security',
-              items: [
-                SettingsCard(
-                  icon: Icons.security,
-                  title: 'Permissions',
-                  subtitle: 'Manage app permissions and access',
-                  color: Colors.orange,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PermissionsScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            SettingsSection(
-              title: 'Information',
-              items: [
-                SettingsCard(
-                  icon: Icons.info_outline,
-                  title: 'About GenLite',
-                  subtitle: 'Version, license, and app information',
-                  color: Colors.purple,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AboutScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
 
             const PrivacyNoticeCard(),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSettingsItem(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppConstants.secondaryTextColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.chevron_right,
+              color: AppConstants.secondaryTextColor,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDivider(BuildContext context) {
+    return Container(
+      height: 1,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      color: Theme.of(context).colorScheme.outline.withOpacity(0.1),
     );
   }
 }

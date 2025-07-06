@@ -16,7 +16,7 @@ void main() {
       await TestConfig.cleanup();
     });
 
-    testWidgets('should render settings home screen with all sections',
+    testWidgets('should render settings home screen with all items',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         TestConfig.createTestApp(
@@ -31,12 +31,7 @@ void main() {
       expect(find.text('App Configuration'), findsOneWidget);
       expect(find.text('Customize your GenLite experience'), findsOneWidget);
 
-      // Verify section headers
-      expect(find.text('AI & Voice'), findsOneWidget);
-      expect(find.text('Privacy & Security'), findsOneWidget);
-      expect(find.text('Information'), findsOneWidget);
-
-      // Verify settings cards
+      // Verify settings items
       expect(find.text('AI Agents'), findsOneWidget);
       expect(find.text('Voice Settings'), findsOneWidget);
       expect(find.text('Permissions'), findsOneWidget);
@@ -47,7 +42,7 @@ void main() {
           find.textContaining('All data is processed locally'), findsOneWidget);
     });
 
-    testWidgets('should display correct card descriptions',
+    testWidgets('should display correct item descriptions',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         TestConfig.createTestApp(
@@ -71,8 +66,8 @@ void main() {
         ),
       );
 
-      // Verify cards are present
-      expect(find.byType(Card), findsNWidgets(4));
+      // Verify main container is present
+      expect(find.byType(Container), findsWidgets);
 
       // Verify icons are present
       expect(find.byIcon(Icons.smart_toy), findsOneWidget);
@@ -82,7 +77,7 @@ void main() {
       expect(find.byIcon(Icons.verified_user), findsOneWidget);
     });
 
-    testWidgets('should have tappable settings cards',
+    testWidgets('should have tappable settings items',
         (WidgetTester tester) async {
       await tester.pumpWidget(
         TestConfig.createTestApp(
@@ -90,8 +85,20 @@ void main() {
         ),
       );
 
-      // Verify all cards are tappable
+      // Verify all items are tappable
       expect(find.byType(InkWell), findsNWidgets(4));
+    });
+
+    testWidgets('should have chevron icons for navigation',
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        TestConfig.createTestApp(
+          const SettingsHomeScreen(),
+        ),
+      );
+
+      // Verify chevron icons are present
+      expect(find.byIcon(Icons.chevron_right), findsNWidgets(4));
     });
   });
 
