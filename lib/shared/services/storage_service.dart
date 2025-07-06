@@ -40,6 +40,27 @@ class StorageService {
     });
   }
 
+  static Map<String, dynamic> _deepConvertKeysToString(
+      Map<dynamic, dynamic> map) {
+    return map.map((key, value) {
+      if (value is Map) {
+        return MapEntry(key.toString(), _deepConvertKeysToString(value));
+      } else if (value is List) {
+        return MapEntry(
+          key.toString(),
+          value.map((item) {
+            if (item is Map) {
+              return _deepConvertKeysToString(item);
+            }
+            return item;
+          }).toList(),
+        );
+      } else {
+        return MapEntry(key.toString(), value);
+      }
+    });
+  }
+
   static Future<List<Map<String, dynamic>>> loadConversations() async {
     final box = Hive.box(_conversationsBox);
     final List<Map<String, dynamic>> conversations = [];
@@ -47,7 +68,8 @@ class StorageService {
     for (final key in box.keys) {
       final data = box.get(key);
       if (data != null) {
-        conversations.add(Map<String, dynamic>.from(data));
+        conversations
+            .add(_deepConvertKeysToString(Map<dynamic, dynamic>.from(data)));
       }
     }
 

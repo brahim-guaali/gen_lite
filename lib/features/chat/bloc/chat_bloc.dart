@@ -25,9 +25,16 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     on<UpdateStreamingMessage>(_onUpdateStreamingMessage);
 
     // Initialize the service and load existing conversations
+    Logger.info(LogTags.chatBloc, 'Initializing ChatBloc');
     _chatService.initialize().then((_) {
+      Logger.info(LogTags.chatBloc,
+          'ChatService initialized successfully, loading conversations');
       // Load existing conversations after service initialization
       add(LoadConversations());
+    }).catchError((error) {
+      Logger.error(LogTags.chatBloc, 'Failed to initialize ChatService',
+          error: error);
+      emit(ChatError('Failed to initialize chat service: $error'));
     });
   }
 
@@ -43,10 +50,15 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
     Emitter<ChatState> emit,
   ) async {
     try {
+      Logger.info(LogTags.chatBloc, 'Loading conversations from service');
       final currentData = _chatService.getCurrentData();
+      Logger.info(LogTags.chatBloc,
+          'Found ${currentData.conversations.length} conversations');
 
       if (currentData.conversations.isNotEmpty) {
         // If there are existing conversations, load the first one
+        Logger.info(LogTags.chatBloc,
+            'Loading existing conversation: ${currentData.conversations.first.title}');
         emit(ChatLoaded(
           currentConversation: currentData.currentConversation ??
               currentData.conversations.first,
@@ -54,9 +66,12 @@ class ChatBloc extends Bloc<ChatEvent, ChatState> {
         ));
       } else {
         // If no conversations exist, stay in initial state
+        Logger.info(LogTags.chatBloc,
+            'No conversations found, emitting ChatInitial state');
         emit(ChatInitial());
       }
     } catch (e) {
+      Logger.error(LogTags.chatBloc, 'Failed to load conversations', error: e);
       emit(ChatError('Failed to load conversations: $e'));
     }
   }

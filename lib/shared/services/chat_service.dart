@@ -26,11 +26,16 @@ class ChatService {
 
   // Initialize service
   Future<void> initialize() async {
-    if (_isInitialized) return;
+    if (_isInitialized) {
+      Logger.info(LogTags.chatService, 'ChatService already initialized');
+      return;
+    }
 
     try {
+      Logger.info(LogTags.chatService, 'Initializing ChatService');
       await _loadConversations();
       _isInitialized = true;
+      Logger.info(LogTags.chatService, 'ChatService initialized successfully');
     } catch (e) {
       Logger.error(LogTags.chatService, 'Error loading conversations',
           error: e);
@@ -41,8 +46,12 @@ class ChatService {
   // Load conversations from persistent storage
   Future<void> _loadConversations() async {
     try {
+      Logger.info(LogTags.chatService, 'Loading conversations from storage');
       // Use the dedicated loadConversations method instead of getSetting
       final conversationsData = await StorageService.loadConversations();
+      Logger.info(LogTags.chatService,
+          'Loaded ${conversationsData.length} conversations from storage');
+
       _conversations =
           conversationsData.map((data) => Conversation.fromJson(data)).toList();
 
@@ -50,12 +59,16 @@ class ChatService {
       final currentConversationId =
           await StorageService.getSetting<String>('current_conversation_id');
       if (currentConversationId != null) {
+        Logger.info(LogTags.chatService,
+            'Loading current conversation: $currentConversationId');
         _currentConversation = _conversations.firstWhere(
           (conv) => conv.id == currentConversationId,
           orElse: () => _conversations.isNotEmpty
               ? _conversations.first
               : throw Exception('Conversation not found'),
         );
+      } else {
+        Logger.info(LogTags.chatService, 'No current conversation ID found');
       }
     } catch (e) {
       Logger.error(LogTags.chatService, 'Error loading conversations',
@@ -312,6 +325,12 @@ class ChatService {
 
   // Get current data for events
   ChatData getCurrentData() {
+    if (!_isInitialized) {
+      Logger.warning(
+          LogTags.chatService, 'getCurrentData called before initialization');
+      return const ChatData(conversations: []);
+    }
+
     return ChatData(
       conversations: _conversations,
       currentConversation: _currentConversation,
