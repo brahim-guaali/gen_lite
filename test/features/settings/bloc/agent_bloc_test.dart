@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:bloc_test/bloc_test.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../../lib/features/settings/bloc/agent_bloc.dart';
 import '../../../../lib/features/settings/bloc/agent_events.dart';
@@ -11,14 +12,36 @@ void main() {
   group('AgentBloc', () {
     late AgentBloc agentBloc;
 
-    setUp(() async {
+    setUpAll(() async {
       await TestConfig.initialize();
+    });
+
+    setUp(() async {
+      // Ensure Hive boxes are open before creating the bloc
+      if (!Hive.isBoxOpen('agents')) {
+        await Hive.openBox('agents');
+      }
+      if (!Hive.isBoxOpen('settings')) {
+        await Hive.openBox('settings');
+      }
+
       agentBloc = AgentBloc();
     });
 
-    tearDown(() {
+    tearDown(() async {
       agentBloc.close();
-      TestConfig.cleanup();
+
+      // Clear test data
+      if (Hive.isBoxOpen('agents')) {
+        await Hive.box('agents').clear();
+      }
+      if (Hive.isBoxOpen('settings')) {
+        await Hive.box('settings').clear();
+      }
+    });
+
+    tearDownAll(() async {
+      await TestConfig.cleanup();
     });
 
     test('initial state should be AgentInitial', () {
@@ -40,6 +63,28 @@ void main() {
         expect: () => [
           isA<AgentLoading>(),
           isA<AgentCreating>(),
+        ],
+        verify: (bloc) {
+          // Verify that the agent was created in memory
+          expect(bloc.agents.length, 1);
+          expect(bloc.agents.first.name, 'Test Agent');
+        },
+      );
+
+      blocTest<AgentBloc, AgentState>(
+        'should emit AgentError when storage fails',
+        build: () => agentBloc,
+        act: (bloc) async {
+          // Close the agents box to simulate storage failure
+          if (Hive.isBoxOpen('agents')) {
+            await Hive.box('agents').close();
+          }
+          bloc.add(testAgent);
+        },
+        expect: () => [
+          isA<AgentLoading>(),
+          isA<AgentCreating>(),
+          isA<AgentError>(),
         ],
       );
     });
