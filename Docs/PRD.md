@@ -1,4 +1,4 @@
-# Product Requirements Document (PDR)
+# Product Requirements Document (PRD)
 ## GenLite: Offline AI Assistant
 
 **Version:** 2.0  
